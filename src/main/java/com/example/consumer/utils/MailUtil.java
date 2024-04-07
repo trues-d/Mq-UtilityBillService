@@ -6,12 +6,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import javax.annotation.Resource;
-import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
 @Component
@@ -29,7 +29,6 @@ public class MailUtil {
     @Resource
     private JavaMailSender javaMailSender;
     private final TemplateEngine templateEngine;
-
 
 
     /**
@@ -57,17 +56,23 @@ public class MailUtil {
 
     public void sendHtmlMail(Mail mail) {
 //        复杂邮件
-        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-        System.out.println(mail);
         try {
-            mimeMessage.setFrom(sender);
-            mimeMessage.setRecipient(MimeMessage.RecipientType.TO, new InternetAddress(mail.getRecipient()));
-            mimeMessage.setSubject(mail.getSubject());
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
+            System.out.println(mail);
+
+            mimeMessageHelper.setFrom(sender);
+            mimeMessageHelper.setTo(mail.getRecipient());
+            mimeMessageHelper.setSubject(mail.getSubject());
             Context context = new Context();
-            context.setVariable("userName",mail.getUserName());
-            context.setVariable("href",String.format("http://%s:%s/utilityBill/userSignUp?signUpUUUID=%s",ip,port,mail.getUuid()));
-            mimeMessage.setText(templateEngine.process("userSignUp.html", context));
-            javaMailSender.send(mimeMessage);
+            context.setVariable("userName", mail.getUserName());
+            context.setVariable("verifyKeys",mail.getUuid());
+            context.setVariable("href", String.format("http://%s:%s/utilityBill/userSignUp?signUpUUID=%s", ip, port, mail.getUuid()));
+            mimeMessageHelper.setText(templateEngine.process("/html/UserSignUp.html", context));
+            javaMailSender.send(mimeMessageHelper.getMimeMessage());
+            log.info("===> html邮件发送成功");
+
+
         } catch (Exception e) {
             log.error("html邮件发送失败 {}", e.getMessage());
             throw new RuntimeException("邮件发送失败");

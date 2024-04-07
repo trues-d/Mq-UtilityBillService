@@ -44,8 +44,13 @@ public class JedisConfig {
     private Boolean testOnReturn;
 
 
+    /**
+     * 通过jedis操作数据库
+     *
+     */
+
     @Bean
-    public JedisPool jedisPool(){
+    public JedisPool JedisPool(){
         JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
         jedisPoolConfig.setMaxIdle(maxIdle);
         jedisPoolConfig.setMinIdle(minIde);
@@ -53,6 +58,7 @@ public class JedisConfig {
         jedisPoolConfig.setMaxWait(Duration.ofMillis(maxWaitMillis));  //创建毫秒级的数据段
         jedisPoolConfig.setTestOnBorrow(testOnBorrow);
         jedisPoolConfig.setTestOnReturn(testOnReturn);
+
 
         log.info("redis properties {}, jedisPoolConfig={}" , this, JSONObject.toJSONString(jedisPoolConfig));
         return new JedisPool(jedisPoolConfig, redisHost, redisPort,0, redisPassword, database);

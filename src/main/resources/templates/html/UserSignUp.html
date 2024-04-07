@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh_CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>邮件认证</title>
+</head>
+<body>
+
+<h3>
+    <p th:text="${userName}" class="single_line"></p>
+    <p >,您好</p>
+</h3>
+<p>请在3分钟内点击下方链接完成注册校验</p>
+<br>
+<h3>
+    <p>您的验证码如下：</p>
+    <h2 th:text="${verifyKeys}"></h2>
+</h3>
+
+<a th:href="@{${href}}">点击验证</a>
+
+
+<link rel="stylesheet" type="text/css" th:href="@{css/UserSignUp.css} ">
+
+
+</body>
+</html>

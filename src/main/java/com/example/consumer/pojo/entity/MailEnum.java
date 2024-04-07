@@ -1,9 +1,7 @@
 package com.example.consumer.pojo.entity;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
-import lombok.Value;
 @Getter
 @AllArgsConstructor
 public enum MailEnum {
@@ -15,10 +13,12 @@ public enum MailEnum {
       *
       */
 
-    MailSubjectTest("张赞发来的测试邮件"),
+    MailSubjectTest("宿舍电费提醒邮件"),
+    MailSignUpSubject("宿舍电费提醒服务注册验证"),
     MailSendingUserName("ZZGEDA_张赞"),
     MailSendingPhoneNumber("19902900670"),
     MailSendingUserQQMail("1293177585@qq.com");
+
 
 
     private final String content;

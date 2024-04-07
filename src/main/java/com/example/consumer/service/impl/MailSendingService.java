@@ -33,7 +33,7 @@ public class MailSendingService implements IMailSendingService {
         Mail mail = new Mail();
         // 接收者邮箱
         mail.setRecipient(recipient);
-        mail.setSubject(MailEnum.MailSubjectTest.getContent());
+        mail.setSubject(MailEnum.MailSignUpSubject.getContent());
         mail.setUserName(userName);
         mail.setUuid(uuid);
         mailUtil.sendHtmlMail(mail);

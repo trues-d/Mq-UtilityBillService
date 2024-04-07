@@ -1,4 +1,4 @@
-# Author: ZZGEDA
+# Author: ZZGEDA 张赞
 
 # Technology Stack Required for the Project:
 * SpringBoot
@@ -45,7 +45,7 @@
 ##### 5. Idempotent verification, implement idempotent verification through Redis scheduled key ❌ Not Implemented  
 
 
-# 作者：ZZGEDA
+# 作者：ZZGEDA 张赞
 
 # 项目所需的技术栈：
 * SpringBoot  

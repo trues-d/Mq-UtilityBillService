@@ -54,4 +54,10 @@ public class UtilityBillController {
 
     }
 
+    @GetMapping("/userSignUp")
+    public WebResponseUtil<Void> SignUpVerify(@RequestParam(name = "signUpUUID") String uuid){
+        System.out.println(uuid);
+        return WebResponseUtil.Success();
+    }
+
 }

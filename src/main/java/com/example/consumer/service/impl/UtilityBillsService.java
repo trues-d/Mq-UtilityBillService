@@ -37,7 +37,7 @@ public class UtilityBillsService implements IUtilityBillsService {
     private final RabbitTemplate rabbitTemplate;
     private static final String utilityBillUrl = "https://application.xiaofubao.com/app/electric/queryISIMSRoomSurplus";
     private final JedisPool jedisPool;
-    private final Float utilityBillThreshold=50.0f;
+    private final Float utilityBillThreshold = 25.0f;
 
 
     /**
@@ -75,6 +75,7 @@ public class UtilityBillsService implements IUtilityBillsService {
                     readTree(httpUtil.doPost(utilityBillUrl, getFormBody(utilityBillDTO), getHeaders(userRecipient))).
                     get("data").get("soc");
             bill = jsonNode.asText();
+            log.info(String.format("用户：%s的宿舍电量还剩%s",userRecipient,bill));
         } catch (Exception e) {
             log.error(e.toString());
             return "";
@@ -104,13 +105,14 @@ public class UtilityBillsService implements IUtilityBillsService {
                 message.getMessageProperties().setMessageId(recipient);
                 return message;
             }));
+            log.info("====>  mq异步消息发送成功");
         }
-        System.out.println("====>  mq异步消息发送成功");
+
     }
 
     // 定时任务 每天下午14点执行
     @Override
-    @Scheduled(cron = "0 30 14 * * ?")
+    @Scheduled(cron = "0 43 13 * * ?")
     public void queryAllUserSendMessage() {
         // 查询所有用户 和 查询所有用户的unique宿舍号 减少请求发送
         String bill;
@@ -124,8 +126,9 @@ public class UtilityBillsService implements IUtilityBillsService {
         utilityBillDTO.setPlatform("");
 
         // 从线程池中申请资源  TODO:其实没有必要使用redis 直接使用Map即可 但考虑对查询数据进行持久化 使用redis
-        Jedis redisResource = jedisPool.getResource();
-        try{
+        // Jedis中有AutoCloseable的实现 try可以使用自动的资源管理 而不需要再写finally关闭资源
+        // CloseableHttpClient==>Closeable==>AutoCloseable
+        try (Jedis redisResource = jedisPool.getResource()) {
             // 循环获得宿舍号的剩余电费 并将学校号_宿舍号为key 将电费bill为value 存入redis
             for (UtilityBillUserDTOLocationDTO dormitoryItem : dormitoryRoomIdsGroupBy) {
                 log.info(dormitoryItem.toString());
@@ -147,9 +150,9 @@ public class UtilityBillsService implements IUtilityBillsService {
                             readTree(httpUtil.doPost(utilityBillUrl, getFormBody(utilityBillDTO), headerSchedule)).
                             get("data").get("soc");
                     bill = jsonNode.asText();
-                    log.info(String.format("%s_%s 剩余电量:%s",dormitoryItem.getUniversityCodeId(),dormitoryItem.getDormitoryRoomId(),bill));
+                    log.info(String.format("%s_%s 剩余电量:%s", dormitoryItem.getUniversityCodeId(), dormitoryItem.getDormitoryRoomId(), bill));
                     // redis插入数据  TODO:后面改成倒计时的 或者最后删除掉 但也可以不用做处理 只有用户注销的时候 才删除指定的Key
-                    redisResource.set(dormitoryLocationKey.toString(),bill);
+                    redisResource.set(dormitoryLocationKey.toString(), bill);
                 } catch (Exception e) {
                     log.error(e.toString());
                 } finally {
@@ -159,7 +162,7 @@ public class UtilityBillsService implements IUtilityBillsService {
 
             log.info("https请求发送成功 以下是发送qqMail");
             // 遍历学生信息 向redis中查询上面的key (学校号_宿舍号) 获得bill数据 异步发送qq邮箱
-            for (UtilityBillUserDTOLocationDTO userItem : allUtilityBillUser){
+            for (UtilityBillUserDTOLocationDTO userItem : allUtilityBillUser) {
                 log.info("=====> 待发送邮件信息");
                 log.info(userItem.toString());
                 dormitoryLocationKey.append(userItem.getUniversityCodeId()).
@@ -169,31 +172,30 @@ public class UtilityBillsService implements IUtilityBillsService {
                 bill = redisResource.get(dormitoryLocationKey.toString());
                 if (!bill.isEmpty()) {
                     //如果小于水电费阈值：50就发送短信，否则不发
-                    if(Float.parseFloat(bill)<this.utilityBillThreshold) {
+                    if (Float.parseFloat(bill) < this.utilityBillThreshold) {
                         // lambda 传入一个自定义方法 这种使用就可以算作是回调函数了
                         rabbitTemplate.convertAndSend("mail.direct", "mail", new MailSendingMqDTO(userItem.getMail(), bill), (message -> {
                             message.getMessageProperties().setMessageId(userItem.getMail());
                             return message;
                         }));
-                        log.info("<===== Mq异步消息发送");
+                        log.info("<===== Mq异步消息发送成功");
+                    }else{
+                        log.info(String.format("<===== 用户%s无须发送", userItem.getUserName()));
                     }
-                    log.info(String.format("<===== 用户%s无须发送",userItem.getUserName()));
                 }
                 // 重置 StringBuilder
                 dormitoryLocationKey.setLength(0);
             }
 
-        }catch (Exception e){
-            log.error(e.toString(),e);
-        }finally {
-            // 关闭线程资源
-            redisResource.close();
+        } catch (Exception e) {
+            log.error(e.toString(), e);
         }
+        // 关闭线程资源
 
     }
 
-//    @Scheduled(cron = "*/5 * * * * *")
-    public  void scheduleTask(){
+    //    @Scheduled(cron = "*/5 * * * * *")
+    public void scheduleTask() {
         System.out.println("test test test test test test test test ");
         System.out.println(Thread.currentThread().getName());
     }
