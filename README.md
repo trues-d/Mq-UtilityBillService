@@ -18,7 +18,7 @@
     │  │  │              ├─config       # Configuration class, including Mybatis-Plus configuration, MqJackson2JsonMessageConverter serialization, HttpClient configuration
     │  │  │              ├─controller   # Controller interface service call
     │  │  │              ├─exception    # Exception, custom exception and global exception listener
-    │  │  │              ├─listener     # Listener, consuming messages from Mq message queue, including binding of exchange and queue 😻(Key)
+    │  │  │              ├─listener     # Listener, consuming messages from Mq message queue, including binding of exchange and queue 😻(Key)   (only MailDirectQueueListener，the others isn't been used)
     │  │  │              │  ├─MailDirectQueueListener       # MailDirectQueueListener listens to direct queue 😻(Key)
     │  │  │              ├─mapper       # Mapper, Mybatis-plus database operation
     │  │  │              ├─pojo         # Pojo, custom objects
@@ -64,7 +64,7 @@
     │  │  │              ├─config       # 配置类 包括Mybatis-Plus配置、MqJackson2JsonMessageConverter序列化、Httpclient配置     
     │  │  │              ├─controller   # controller 接口服务调用     
     │  │  │              ├─exception    # exception 自定义异常和全局异常监听器    
-    │  │  │              ├─listener     # listener Mq消息队列消费消息、包括exchange和queue的绑定  😻（关键）   
+    │  │  │              ├─listener     # listener Mq消息队列消费消息、包括exchange和queue的绑定  😻（关键）   （只有MailDirectQueueListener，其余的未使用）
     │  │  │              │  ├─MailDirectQueueListener       # MailDirectQueueListener 监听direct queue队列  😻（关键）
     │  │  │              ├─mapper       # mapper Mybatis-plus的数据库操作   
     │  │  │              ├─pojo         # pojo 自定义对象     
