@@ -3,7 +3,7 @@ package com.example.consumer;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.example.consumer.pojo.Mail;
+import com.example.consumer.pojo.dto.MailDTO;
 
 import com.example.consumer.pojo.dto.UtilityBillUserDTO;
 import com.example.consumer.service.impl.UtilityBillsService;
@@ -42,17 +42,17 @@ class ConsumerApplicationTests {
 
     @Test
     void MailSending(String bills) {
-        Mail mail = new Mail();
+        MailDTO mailDTO = new MailDTO();
 //        int code = (int) ((Math.random() * 9 + 1) * 100000);
-        mail.setRecipient(recipient);
-        mail.setSubject("张赞发来的测试邮件");
-        mail.setContent("亲爱的用户：您好！\n" +
+        mailDTO.setRecipient(recipient);
+        mailDTO.setSubject("张赞发来的测试邮件");
+        mailDTO.setContent("亲爱的用户：您好！\n" +
                 "\n" +
                 "\t这是一封来自ZZGEDA_张赞的邮件，请不用理会这封电子邮件。\n" +
                 "\t但是：您房间电费剩余 " + bills + "度，如果电力不足请及时充电\n" +
                 "\t咨询人：ZZGEDA_张赞 联系电话：19902900670\n"
         );
-        mailUtil.sendSimpleMail(mail);
+        mailUtil.sendSimpleMail(mailDTO);
     }
 
     @Test

@@ -10,7 +10,7 @@
 <mapper namespace="com.example.consumer.mapper.UtilityBillUserMapper">
 
     <select id="getAllUtilityBillUser" resultType="com.example.consumer.pojo.dto.UtilityBillUserDTOLocationDTO">
-        select ubs.mail,
+        select ubs.mailDTO,
                ubs.user_name,
                ubs.dormitory_id,
                ubs.dormitory_room_id,

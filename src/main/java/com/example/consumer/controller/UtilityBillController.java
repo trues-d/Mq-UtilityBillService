@@ -2,23 +2,23 @@ package com.example.consumer.controller;
 
 
 import com.example.consumer.pojo.dto.UserSignUpDTO;
-import com.example.consumer.pojo.po.UniversityCodePO;
-import com.example.consumer.service.impl.UserLoginService;
+import com.example.consumer.pojo.vo.DormitoryBuildingVO;
+import com.example.consumer.pojo.vo.UniversityInformationListVO;
+import com.example.consumer.service.impl.UserSignUpService;
 import com.example.consumer.service.impl.UtilityBillsService;
 import com.example.consumer.utils.WebResponseUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 
 @RestController
 @RequestMapping("/utilityBill")
 @RequiredArgsConstructor
+@CrossOrigin
 public class UtilityBillController {
     private final UtilityBillsService utilityBillsService;
-    private final UserLoginService userLoginService;
+    private final UserSignUpService userSignUpService;
 
     /**
      * 针对已经注册的用户，传入用户邮箱，即可查询用户宿舍的水电费情况
@@ -29,7 +29,7 @@ public class UtilityBillController {
      */
 
     @GetMapping("/getBill")
-    public WebResponseUtil<Void> getUtilityBill(@RequestParam(required = false) String recipient){
+    public WebResponseUtil<Void> getUtilityBill(@RequestParam(required = false ,value = "mail") String recipient){
         utilityBillsService.sendBill(recipient);
         return WebResponseUtil.Success();
     }
@@ -40,16 +40,23 @@ public class UtilityBillController {
      * @return [] 返回的学校信息列表
      */
 
-    @GetMapping("/getUniversityInformation")
-    public WebResponseUtil<List<UniversityCodePO>> getUniversityInformation(){
-        return    WebResponseUtil.Success(userLoginService.getUniversityInformation());
+    @GetMapping("/getUniversityAndArea")
+    public WebResponseUtil<UniversityInformationListVO> getUniversityAndArea(){
+        return    WebResponseUtil.Success(userSignUpService.getUniversityInformation());
+    }
+
+    @GetMapping("/getDormitoryDetails")
+        public WebResponseUtil<DormitoryBuildingVO> getDormitoryDetails(@RequestParam String universityUuid){
+
+        return WebResponseUtil.Success(userSignUpService.getDormitoryDetails(universityUuid));
+
     }
 
 
     @PostMapping("/userSignUp")
     public WebResponseUtil<Void> SignUp(@Validated  @RequestBody UserSignUpDTO userSignUpDTO){
         System.out.println(userSignUpDTO.toString());
-        userLoginService.userSignUp(userSignUpDTO);
+        userSignUpService.userSignUpVerify(userSignUpDTO);
         return WebResponseUtil.Success();
 
     }

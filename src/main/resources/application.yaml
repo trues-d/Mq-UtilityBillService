@@ -35,7 +35,7 @@ spring:
       testOnBorrow: ${jedis.testOnBorrow}
       testOnReturn: ${jedis.testOnReturn}
 
-  # SMTP Mail
+  # SMTP MailDTO
   mail:
     host: smtp.qq.com #SMTP服务器地址   qq邮箱服务器
     username: 1293177585@qq.com #登陆账号  发送方邮箱

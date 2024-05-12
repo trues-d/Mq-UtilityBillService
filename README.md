@@ -26,7 +26,7 @@
     │  │  │              │  ├─entity    # Entity, entity type
     │  │  │              │  └─po        # Po, persistent object
     │  │  │              ├─service      # Service, core service
-    │  │  │              └─utils        # Util package, encapsulating HttpClient request, Mail mail sending 😻(Key)
+    │  │  │              └─utils        # Util package, encapsulating HttpClient request, Mail mailDTO sending 😻(Key)
     │  │  └─resources
     │  │      └─mapper                  # Mapper, xml files encapsulating sql
     │  └─test                            # Test files

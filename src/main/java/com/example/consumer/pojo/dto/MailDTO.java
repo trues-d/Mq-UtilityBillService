@@ -1,4 +1,4 @@
-package com.example.consumer.pojo;
+package com.example.consumer.pojo.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,7 +9,7 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Mail implements Serializable {
+public class MailDTO implements Serializable {
     private static final long serialVersionUID = 4359709211352400087L;
     private String recipient;//邮件接收人
     private String subject; //邮件主题

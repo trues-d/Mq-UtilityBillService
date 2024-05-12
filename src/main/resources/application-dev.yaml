@@ -28,3 +28,6 @@ jedis:
   testOnBorrow: false   #这是从连接池获取连接时，是否进行有效性检查设置为false
   testOnReturn: true  #这是向连接池返回连接时，是否进行有效性检查设置为true。
 
+now:
+  host:
+    ip: 127.0.0.1

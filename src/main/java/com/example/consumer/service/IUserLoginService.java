@@ -1,12 +1,13 @@
 package com.example.consumer.service;
 
 import com.example.consumer.pojo.dto.UserSignUpDTO;
-import com.example.consumer.pojo.po.UniversityCodePO;
-
-import java.util.List;
+import com.example.consumer.pojo.vo.DormitoryBuildingVO;
+import com.example.consumer.pojo.vo.UniversityInformationListVO;
 
 public interface IUserLoginService {
-    public List<UniversityCodePO> getUniversityInformation();
+     UniversityInformationListVO getUniversityInformation();
 
-    public void userSignUp(UserSignUpDTO userSignUpDTO);
+     void userSignUpVerify(UserSignUpDTO userSignUpDTO);
+
+     DormitoryBuildingVO getDormitoryDetails(String universityUuid);
 }

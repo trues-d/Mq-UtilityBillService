@@ -1,6 +1,6 @@
 package com.example.consumer.service.impl;
 
-import com.example.consumer.pojo.Mail;
+import com.example.consumer.pojo.dto.MailDTO;
 import com.example.consumer.pojo.entity.MailEnum;
 import com.example.consumer.pojo.entity.UtilityBillEnum;
 import com.example.consumer.service.IMailSendingService;
@@ -20,22 +20,22 @@ public class MailSendingService implements IMailSendingService {
 
     @Override
     public void sendSimpleMailFormQQMail(String recipient ,String bill){
-        Mail mail = new Mail();
+        MailDTO mailDTO = new MailDTO();
         // 接收者邮箱
-        mail.setRecipient(recipient);
-        mail.setSubject(MailEnum.MailSubjectTest.getContent());
-        mail.setContent(mailContextUtil.getFullMailContextMessage(UtilityBillEnum.class,bill));
-        mailUtil.sendSimpleMail(mail);
+        mailDTO.setRecipient(recipient);
+        mailDTO.setSubject(MailEnum.MailSubjectTest.getContent());
+        mailDTO.setContent(mailContextUtil.getFullMailContextMessage(UtilityBillEnum.class,bill));
+        mailUtil.sendSimpleMail(mailDTO);
     }
 
     @Override
     public void sendHtmlMailFormQQMail(String recipient, String userName, String uuid) {
-        Mail mail = new Mail();
+        MailDTO mailDTO = new MailDTO();
         // 接收者邮箱
-        mail.setRecipient(recipient);
-        mail.setSubject(MailEnum.MailSignUpSubject.getContent());
-        mail.setUserName(userName);
-        mail.setUuid(uuid);
-        mailUtil.sendHtmlMail(mail);
+        mailDTO.setRecipient(recipient);
+        mailDTO.setSubject(MailEnum.MailSignUpSubject.getContent());
+        mailDTO.setUserName(userName);
+        mailDTO.setUuid(uuid);
+        mailUtil.sendHtmlMail(mailDTO);
     }
 }

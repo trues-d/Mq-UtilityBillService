@@ -5,4 +5,5 @@ import com.example.consumer.pojo.po.UniversityCodePO;
 
 public interface UniversityCodeMapper extends BaseMapper<UniversityCodePO> {
 
+
 }
