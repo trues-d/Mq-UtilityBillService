@@ -5,13 +5,12 @@ import com.example.consumer.convert.UtilityBillConvert;
 import com.example.consumer.dao.DormitoryCodeDao;
 import com.example.consumer.mapper.UniversityCodeMapper;
 import com.example.consumer.mapper.UtilityBillUserMapper;
-import com.example.consumer.pojo.dto.DormitoryFindByUniversityUuidDTO;
-import com.example.consumer.pojo.dto.UniversityInformationDTO;
-import com.example.consumer.pojo.dto.UserSignUpDTO;
+import com.example.consumer.pojo.dto.*;
 import com.example.consumer.pojo.po.DormitoryAreaPO;
 import com.example.consumer.pojo.po.DormitoryCodePO;
 import com.example.consumer.pojo.po.UniversityCodePO;
 import com.example.consumer.pojo.vo.DormitoryBuildingVO;
+import com.example.consumer.pojo.vo.DormitoryFloorVO;
 import com.example.consumer.pojo.vo.UniversityInformationListVO;
 import com.example.consumer.service.IUserLoginService;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +36,24 @@ public class UserSignUpService implements IUserLoginService {
 
     private static final Integer UUID_SUBSTRING_BEGIN = 0;
     private static final Integer UUID_SUBSTRING_NED = 16;
+    /**
+     * 每个宿舍楼最少1层
+     */
+    private static final Integer MIN_FLOOR_NUM = 1;
+    /**
+     * 每个宿舍楼，最多20层
+     */
+    private static final Integer MAX_FLOOR_NUM = 20;
+
+    /**
+     * 宿舍楼每层最少1个房间
+     */
+    private static final Integer MIN_FLOOR_ROOM_NUM = 1;
+
+    /**
+     * 宿舍楼每层最多30个房间
+     */
+    private static final Integer MAX_FLOOR_ROOM_NUM = 30;
 
 
     @Override
@@ -91,7 +108,7 @@ public class UserSignUpService implements IUserLoginService {
 
     @Override
     public DormitoryBuildingVO getDormitoryDetails(String universityUuid) {
-        if(Objects.isNull(universityUuid) || universityUuid.isEmpty()){
+        if (Objects.isNull(universityUuid) || universityUuid.isEmpty()) {
             return new DormitoryBuildingVO(new ArrayList<>());
         }
 
@@ -118,13 +135,55 @@ public class UserSignUpService implements IUserLoginService {
                                 new ArrayList<>(),
                                 collect.get(dormitoryItem.getDormitoryAreaUuid())
                                         .getTitle()
-                                        .concat(String.format("-%s",buildingName)));
+                                        .concat(String.format("-%s", buildingName)));
                 // 存入Map
                 collect.get(dormitoryItem.getDormitoryAreaUuid()).getChildren().add(returnItem);
             }
         });
         return new DormitoryBuildingVO(new ArrayList<>(collect.values()));
+    }
 
+    @Override
+    public DormitoryFloorVO getDormitoryRoom() {
+        HashMap<String, List<FloorDTO>> floorToRoomMap = new HashMap<>();
+        for (int floorNum = MIN_FLOOR_NUM; floorNum <= MAX_FLOOR_NUM; floorNum++) {
+            List<FloorDTO> floorsList = new ArrayList<>();
+            String floorNumNew = floorNum < 10 ? "0".concat(String.valueOf(floorNum)):String.valueOf(floorNum);
+            for (int roomNum = MIN_FLOOR_ROOM_NUM; roomNum <= MAX_FLOOR_ROOM_NUM; roomNum++) {
+                FloorDTO floorDTO = new FloorDTO();
+                String roomNumNew = roomNum < 10 ? "0".concat(String.valueOf(roomNum)):String.valueOf(roomNum);
+                floorDTO.setFloor(floorNumNew);
+                floorDTO.setRoom(roomNumNew);
+                floorDTO.setFloorRoom(floorNumNew.concat(roomNumNew));
+                floorDTO.setFloorRoomShow(getFloorRoom(floorNum,roomNum));
 
+                floorsList.add(floorDTO);
+            }
+            floorToRoomMap.put(String.valueOf(floorNum),floorsList);
+        }
+
+        Map<String, TreeFloorDTO> result = floorToRoomMap.entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        (item) -> {
+                            List<FloorDTO> floorDTOList = item.getValue();
+                            TreeFloorDTO treeFloorDTO = new TreeFloorDTO();
+                            treeFloorDTO.setTitle(item.getKey().concat("楼"));
+                            treeFloorDTO.setValue(item.getKey());
+                            treeFloorDTO.setFloorRoom(item.getKey());
+                            treeFloorDTO.setChildren(
+                                    floorDTOList.stream()
+                                            .map(utilityBillConvert::FloorDTOToTreeFloorDTO)
+                                            .collect(Collectors.toList()));
+                            return treeFloorDTO;
+
+                        }));
+        DormitoryFloorVO dormitoryFloorVO = new DormitoryFloorVO(new ArrayList<>(result.values()));
+        Collections.sort(dormitoryFloorVO.getRoomLocation());
+        return dormitoryFloorVO;
+    }
+    private String getFloorRoom(Integer floor,Integer room){
+        return String.valueOf(floor*100+room);
     }
 }

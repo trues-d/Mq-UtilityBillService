@@ -1,6 +1,8 @@
 package com.example.consumer.convert;
 
 import com.example.consumer.pojo.dto.DormitoryFindByUniversityUuidDTO;
+import com.example.consumer.pojo.dto.FloorDTO;
+import com.example.consumer.pojo.dto.TreeFloorDTO;
 import com.example.consumer.pojo.dto.UniversityInformationDTO;
 import com.example.consumer.pojo.po.DormitoryAreaPO;
 import com.example.consumer.pojo.po.UniversityCodePO;
@@ -31,4 +33,12 @@ public interface UtilityBillConvert {
     })
     DormitoryFindByUniversityUuidDTO dormitoryAreaPOToDormitoryFindByUniversityUuidDTO(DormitoryAreaPO dormitoryAreaPO);
 
+
+    @Mappings({
+            @Mapping(source = "floorRoomShow",target = "title"),
+            @Mapping(source = "floorRoom",target = "value"),
+            @Mapping(source = "floorRoomShow",target = "floorRoom"),
+            @Mapping(target = "children",expression = "java(new java.util.ArrayList<>())")
+    })
+    TreeFloorDTO FloorDTOToTreeFloorDTO(FloorDTO floorDTO);
 }

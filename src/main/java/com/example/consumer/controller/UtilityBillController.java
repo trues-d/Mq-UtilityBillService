@@ -34,35 +34,9 @@ public class UtilityBillController {
         return WebResponseUtil.Success();
     }
 
-    /**
-     *  查询学校信息数据用于返回学校信息列表 给前端做下拉列表展示
-     *
-     * @return [] 返回的学校信息列表
-     */
-
-    @GetMapping("/getUniversityAndArea")
-    public WebResponseUtil<UniversityInformationListVO> getUniversityAndArea(){
-        return    WebResponseUtil.Success(userSignUpService.getUniversityInformation());
-    }
-
-    @GetMapping("/getDormitoryDetails")
-        public WebResponseUtil<DormitoryBuildingVO> getDormitoryDetails(@RequestParam String universityUuid){
-
-        return WebResponseUtil.Success(userSignUpService.getDormitoryDetails(universityUuid));
-
-    }
-
-
-    @PostMapping("/userSignUp")
-    public WebResponseUtil<Void> SignUp(@Validated  @RequestBody UserSignUpDTO userSignUpDTO){
-        System.out.println(userSignUpDTO.toString());
-        userSignUpService.userSignUpVerify(userSignUpDTO);
-        return WebResponseUtil.Success();
-
-    }
 
     @GetMapping("/userSignUp")
-    public WebResponseUtil<Void> SignUpVerify(@RequestParam(name = "signUpUUID") String uuid){
+    public WebResponseUtil<Void> signUpVerify(@RequestParam(name = "signUpUUID") String uuid){
         System.out.println(uuid);
         return WebResponseUtil.Success();
     }
