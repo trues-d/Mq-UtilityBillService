@@ -1,11 +1,9 @@
 package com.example.consumer.convert;
 
-import com.example.consumer.pojo.dto.DormitoryFindByUniversityUuidDTO;
-import com.example.consumer.pojo.dto.FloorDTO;
-import com.example.consumer.pojo.dto.TreeFloorDTO;
-import com.example.consumer.pojo.dto.UniversityInformationDTO;
+import com.example.consumer.pojo.dto.*;
 import com.example.consumer.pojo.po.DormitoryAreaPO;
 import com.example.consumer.pojo.po.UniversityCodePO;
+import com.example.consumer.pojo.po.UtilityBillUserDTOPO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -40,5 +38,16 @@ public interface UtilityBillConvert {
             @Mapping(source = "floorRoomShow",target = "floorRoom"),
             @Mapping(target = "children",expression = "java(new java.util.ArrayList<>())")
     })
-    TreeFloorDTO FloorDTOToTreeFloorDTO(FloorDTO floorDTO);
+    TreeFloorDTO floorDTOToTreeFloorDTO(FloorDTO floorDTO);
+
+    @Mappings({
+            @Mapping(source ="email" ,target = "mail"),
+            @Mapping(source ="userName" ,target = "userName"),
+            @Mapping(source ="universityCodeId" ,target = "universityCodeId"),
+            @Mapping(target ="dormitoryId" ,expression = "java(0)"),
+            @Mapping(target ="dormitoryRoomId" ,expression = "java(0)"),
+            @Mapping(target = "ifDeleted",expression= "java(0)")
+    })
+    UtilityBillUserDTOPO userSignUpDTOToUtilityBillUserDTOPO(UserSignUpDTO userSignUpDTO);
+
 }

@@ -1,5 +1,6 @@
 package com.example.consumer.dao;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.consumer.mapper.DormitoryAreaMapper;
@@ -45,6 +46,14 @@ public class DormitoryCodeDao {
         return dormitoryAreaMapper.selectList(wrapper)
                 .stream()
                 .collect(Collectors.toMap(DormitoryAreaPO::getUuid,i->i));
+    }
+
+    public Long selectCodeId(String dormitoryUuid){
+        LambdaQueryWrapper<DormitoryCodePO> wrapper = Wrappers.lambdaQuery();
+        wrapper.select(DormitoryCodePO::getCodeId)
+                .eq(DormitoryCodePO::getUuid,dormitoryUuid);
+        DormitoryCodePO dormitoryCodePO = dormitoryCodeMapper.selectOne(wrapper);
+        return dormitoryCodePO.getCodeId();
     }
 
 

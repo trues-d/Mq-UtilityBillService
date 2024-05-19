@@ -1,5 +1,6 @@
 package com.example.consumer.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.example.consumer.convert.UtilityBillConvert;
 import com.example.consumer.dao.DormitoryCodeDao;
@@ -10,30 +11,44 @@ import com.example.consumer.pojo.entity.UserSignUpEnum;
 import com.example.consumer.pojo.po.DormitoryAreaPO;
 import com.example.consumer.pojo.po.DormitoryCodePO;
 import com.example.consumer.pojo.po.UniversityCodePO;
+import com.example.consumer.pojo.po.UtilityBillUserDTOPO;
 import com.example.consumer.pojo.vo.DormitoryBuildingVO;
 import com.example.consumer.pojo.vo.DormitoryFloorVO;
 import com.example.consumer.pojo.vo.UniversityInformationListVO;
 import com.example.consumer.service.IUserSignUpService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
 
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
+
 public class UserSignUpService implements IUserSignUpService {
-    private final UniversityCodeMapper universityCodeMapper;
-    private final UtilityBillUserMapper utilityBillUserMapper;
-    private final MailSendingService mailSendingService;
-    private final UtilityBillConvert utilityBillConvert;
+    @Resource
+    private  UniversityCodeMapper universityCodeMapper;
+    @Resource
+    private  UtilityBillUserMapper utilityBillUserMapper;
+    @Resource
+    private  MailSendingService mailSendingService;
+    @Resource
+    private  UtilityBillConvert utilityBillConvert;
+
+    @Resource
+    private  JedisPool jedisPool;
 
     @Resource
     private DormitoryCodeDao dormitoryCodeDao;
+
+    @Resource
+    private UtilityBillUserService utilityBillUserService;
 
 
     private static final Integer UUID_SUBSTRING_BEGIN = 0;
@@ -56,6 +71,18 @@ public class UserSignUpService implements IUserSignUpService {
      * 宿舍楼每层最多30个房间
      */
     private static final Integer MAX_FLOOR_ROOM_NUM = 30;
+
+    /**
+     * 用户注册生成的uuid的过期时间
+     */
+
+    private static final Duration Minutes_5 = Duration.ofMinutes(5L);
+
+    /**
+     * 用户注册时的空间
+     */
+    private static final String User_SignUp_Key="user:signUp:%s";
+
 
 
     @Override
@@ -104,16 +131,23 @@ public class UserSignUpService implements IUserSignUpService {
         UserSignUpRespDTO userSignUpRespDTO = new UserSignUpRespDTO();
         // 如果还没有注册就发送邮件
         if (utilityBillUserMapper.selectBatchIds(Collections.singletonList(userSignUpDTO.getEmail())).size()==0) {
-            UUID userUuid = UUID.randomUUID();
+            // 16位的uuid
+            UUID uuid = UUID.randomUUID();
+            String fullUUID = uuid.toString().replace("-", "");
+            String userUuid = fullUUID.substring(0, 16);
             try{
-                mailSendingService.sendHtmlMailFormQQMail(userSignUpDTO.getEmail(), userSignUpDTO.getUserName(), userUuid.toString());
+                Jedis resource = jedisPool.getResource();
+                long exSeconds = Minutes_5.getSeconds();
+                resource.setex(String.format(User_SignUp_Key, userUuid),exSeconds,JSON.toJSONString(userSignUpDTO));
+                resource.close();
+                mailSendingService.sendHtmlMailFormQQMail(userSignUpDTO.getEmail(), userSignUpDTO.getUserName(), userUuid);
             }catch (Exception exception){
                 log.error("邮件发送失败",exception);
             }
             userSignUpRespDTO.setVerifyCode(UserSignUpEnum.USER_NEVER_SIGNUP.getValue());
             userSignUpRespDTO.setSignUpMsg(UserSignUpEnum.USER_NEVER_SIGNUP.getSignUpMsg());
             userSignUpRespDTO.setInformMsg("登录校验邮件已经发送");
-            userSignUpRespDTO.setUserUuid(userUuid.toString());
+            userSignUpRespDTO.setUserUuid(userUuid);
         }else{
             // 否则表示已经注册了 表示可以直接跳转到到登录页面
             userSignUpRespDTO.setVerifyCode(UserSignUpEnum.USER_HAS_SIGNUP.getValue());
@@ -158,7 +192,7 @@ public class UserSignUpService implements IUserSignUpService {
                 DormitoryFindByUniversityUuidDTO returnItem =
                         new DormitoryFindByUniversityUuidDTO(buildingName,
                                 dormitoryItem.getUuid(),
-                                dormitoryItem.getCodeId(),
+                                String.valueOf(dormitoryItem.getCodeId()),
                                 new ArrayList<>(),
                                 collect.get(dormitoryItem.getDormitoryAreaUuid())
                                         .getTitle()
@@ -201,7 +235,7 @@ public class UserSignUpService implements IUserSignUpService {
                             treeFloorDTO.setFloorRoom(item.getKey());
                             treeFloorDTO.setChildren(
                                     floorDTOList.stream()
-                                            .map(utilityBillConvert::FloorDTOToTreeFloorDTO)
+                                            .map(utilityBillConvert::floorDTOToTreeFloorDTO)
                                             .collect(Collectors.toList()));
                             return treeFloorDTO;
 
@@ -212,5 +246,34 @@ public class UserSignUpService implements IUserSignUpService {
     }
     private String getFloorRoom(Integer floor,Integer room){
         return String.valueOf(floor*100+room);
+    }
+
+
+    @Override
+    public void verifyUserUuid(String userUuid, HttpServletResponse response) {
+        Jedis resource = jedisPool.getResource();
+        String userKey = String.format(User_SignUp_Key, userUuid);
+        Boolean ifExist = resource.exists(userKey);
+        if(ifExist){
+            // 如果存在表示用户已经输入过信息表单，现在正在完成登录校验
+            UserSignUpDTO userSignUpDTO = JSON.parseObject(resource.get(userKey), UserSignUpDTO.class);
+            log.error(userSignUpDTO.toString());
+            UtilityBillUserDTOPO utilityBillUserDTOPO = utilityBillConvert.userSignUpDTOToUtilityBillUserDTOPO(userSignUpDTO);
+
+            String dormitoryIdKey = userSignUpDTO.getDormitoryId();
+
+            String dormitoryId = String.valueOf(dormitoryCodeDao.selectCodeId(dormitoryIdKey));
+
+            utilityBillUserDTOPO.setDormitoryRoomId(
+                    Integer.valueOf(
+                            dormitoryId.concat(userSignUpDTO.getDormitoryRoomId())
+                    )
+            );
+            utilityBillUserDTOPO.setDormitoryId(Integer.valueOf(dormitoryId));
+            utilityBillUserService.save(utilityBillUserDTOPO);
+
+
+        }
+
     }
 }

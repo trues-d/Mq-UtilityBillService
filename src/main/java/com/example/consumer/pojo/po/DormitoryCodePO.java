@@ -11,7 +11,7 @@ public class DormitoryCodePO {
 
     @MppMultiId
     @TableField("code_id")
-    private String codeId;
+    private Long codeId;
 
     @MppMultiId
     @TableField("university_code_id")

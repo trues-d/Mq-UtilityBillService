@@ -67,7 +67,7 @@ public class MailUtil {
             Context context = new Context();
             context.setVariable("userName", mailDTO.getUserName());
             context.setVariable("verifyKeys", mailDTO.getUuid());
-            context.setVariable("href", String.format("http://%s:%s/utilityBill/userSignUp?signUpUUID=%s", ip, port, mailDTO.getUuid()));
+            context.setVariable("href", String.format("http://%s:%s/utilityBill/signUp/userSignUp/verify?signUpUUID=%s", ip, port, mailDTO.getUuid()));
             mimeMessageHelper.setText(templateEngine.process("/html/UserSignUp.html", context));
             javaMailSender.send(mimeMessageHelper.getMimeMessage());
             log.info("===> html邮件发送成功");

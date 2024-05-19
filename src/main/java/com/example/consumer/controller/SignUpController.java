@@ -5,11 +5,13 @@ import com.example.consumer.pojo.dto.UserSignUpRespDTO;
 import com.example.consumer.pojo.vo.DormitoryBuildingVO;
 import com.example.consumer.pojo.vo.DormitoryFloorVO;
 import com.example.consumer.pojo.vo.UniversityInformationListVO;
-import com.example.consumer.service.impl.UserSignUpService;
+import com.example.consumer.service.IUserSignUpService;
 import com.example.consumer.utils.WebResponseUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/utilityBill/signUp")
@@ -17,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin
 public class SignUpController {
 
-    private final UserSignUpService userSignUpService;
+    private final IUserSignUpService userSignUpService;
 
     /**
      *  查询学校信息数据用于返回学校信息列表 给前端做下拉列表展示
@@ -52,5 +54,13 @@ public class SignUpController {
         UserSignUpRespDTO userSignUpRespDTO = userSignUpService.userSignUpVerify(userSignUpDTO);
         return WebResponseUtil.Success(userSignUpRespDTO);
     }
+
+    @GetMapping("/userSignUp/verify")
+    public WebResponseUtil<Void> signUpVerify(@RequestParam(name = "signUpUUID") String uuid, HttpServletResponse response){
+        System.out.println(uuid);
+        userSignUpService.verifyUserUuid(uuid,response);
+        return WebResponseUtil.Success();
+    }
+
 
 }
