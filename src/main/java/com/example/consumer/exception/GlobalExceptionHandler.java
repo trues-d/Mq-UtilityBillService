@@ -3,10 +3,12 @@ package com.example.consumer.exception;
 import com.example.consumer.utils.WebResponseUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.validation.BindException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.Objects;
 
 
 /**
@@ -29,14 +31,19 @@ public class GlobalExceptionHandler {
     public WebResponseUtil<Object> SystemExceptionHandel(Exception exception) {
         log.error(exception.toString(), exception);
         return WebResponseUtil.error(-1, "系统错误，请联系管理员");
-
     }
 
     @ExceptionHandler(BindException.class)
     public WebResponseUtil<Object> BindExceptionHandle(Exception exception) {
-        log.error(exception.toString(), exception);
+        log.warn(exception.toString(), exception);
         return WebResponseUtil.error(-1, "传入参数不符合规范，请重新填写表单");
 
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public WebResponseUtil<Object> MethodArgumentNotValidExceptionHandle(BindException exception){
+        log.warn(exception.toString(),exception);
+        return WebResponseUtil.error(-1, Objects.requireNonNull(exception.getBindingResult().getFieldError()).getDefaultMessage());
     }
 
 }

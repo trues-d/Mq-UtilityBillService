@@ -1,14 +1,15 @@
 package com.example.consumer.service;
 
 import com.example.consumer.pojo.dto.UserSignUpDTO;
+import com.example.consumer.pojo.dto.UserSignUpRespDTO;
 import com.example.consumer.pojo.vo.DormitoryBuildingVO;
 import com.example.consumer.pojo.vo.DormitoryFloorVO;
 import com.example.consumer.pojo.vo.UniversityInformationListVO;
 
-public interface IUserLoginService {
+public interface IUserSignUpService {
      UniversityInformationListVO getUniversityInformation();
 
-     void userSignUpVerify(UserSignUpDTO userSignUpDTO);
+     UserSignUpRespDTO userSignUpVerify(UserSignUpDTO userSignUpDTO);
 
      DormitoryBuildingVO getDormitoryDetails(String universityUuid);
      DormitoryFloorVO getDormitoryRoom();

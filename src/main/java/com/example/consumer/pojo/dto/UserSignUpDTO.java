@@ -15,7 +15,7 @@ public class UserSignUpDTO {
 
     @NotBlank(message = "邮箱地址不能为空")
     @Email(message = "请输入有效的邮件地址")
-    private String mail;
+    private String email;
 
     @NotBlank(message = "用户名不能为空")
     private String userName;

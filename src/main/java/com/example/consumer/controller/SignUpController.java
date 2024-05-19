@@ -1,6 +1,7 @@
 package com.example.consumer.controller;
 
 import com.example.consumer.pojo.dto.UserSignUpDTO;
+import com.example.consumer.pojo.dto.UserSignUpRespDTO;
 import com.example.consumer.pojo.vo.DormitoryBuildingVO;
 import com.example.consumer.pojo.vo.DormitoryFloorVO;
 import com.example.consumer.pojo.vo.UniversityInformationListVO;
@@ -46,10 +47,10 @@ public class SignUpController {
     }
 
     @PostMapping("/userSignUp")
-    public WebResponseUtil<Void> signUp(@Validated  @RequestBody UserSignUpDTO userSignUpDTO){
+    public WebResponseUtil<UserSignUpRespDTO> signUp(@Validated  @RequestBody UserSignUpDTO userSignUpDTO){
         System.out.println(userSignUpDTO.toString());
-        userSignUpService.userSignUpVerify(userSignUpDTO);
-        return WebResponseUtil.Success();
+        UserSignUpRespDTO userSignUpRespDTO = userSignUpService.userSignUpVerify(userSignUpDTO);
+        return WebResponseUtil.Success(userSignUpRespDTO);
     }
 
 }

@@ -6,13 +6,14 @@ import com.example.consumer.dao.DormitoryCodeDao;
 import com.example.consumer.mapper.UniversityCodeMapper;
 import com.example.consumer.mapper.UtilityBillUserMapper;
 import com.example.consumer.pojo.dto.*;
+import com.example.consumer.pojo.entity.UserSignUpEnum;
 import com.example.consumer.pojo.po.DormitoryAreaPO;
 import com.example.consumer.pojo.po.DormitoryCodePO;
 import com.example.consumer.pojo.po.UniversityCodePO;
 import com.example.consumer.pojo.vo.DormitoryBuildingVO;
 import com.example.consumer.pojo.vo.DormitoryFloorVO;
 import com.example.consumer.pojo.vo.UniversityInformationListVO;
-import com.example.consumer.service.IUserLoginService;
+import com.example.consumer.service.IUserSignUpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class UserSignUpService implements IUserLoginService {
+public class UserSignUpService implements IUserSignUpService {
     private final UniversityCodeMapper universityCodeMapper;
     private final UtilityBillUserMapper utilityBillUserMapper;
     private final MailSendingService mailSendingService;
@@ -33,6 +34,7 @@ public class UserSignUpService implements IUserLoginService {
 
     @Resource
     private DormitoryCodeDao dormitoryCodeDao;
+
 
     private static final Integer UUID_SUBSTRING_BEGIN = 0;
     private static final Integer UUID_SUBSTRING_NED = 16;
@@ -90,12 +92,37 @@ public class UserSignUpService implements IUserLoginService {
         return new UniversityInformationListVO(new ArrayList<>(resultMap.values()));
     }
 
+
+    /**
+     * 邮箱验证登录
+     *
+     * @param userSignUpDTO:
+     */
+
     @Override
-    public void userSignUpVerify(UserSignUpDTO userSignUpDTO) {
-        // Collections.singletonList(userSignUpDTO.getMail()) 创建包含字符串的不可改变的列表
-        if (utilityBillUserMapper.selectBatchIds(Collections.singletonList(userSignUpDTO.getMail())).size()==0) {
-            mailSendingService.sendHtmlMailFormQQMail(userSignUpDTO.getMail(), userSignUpDTO.getUserName(), UUID.randomUUID().toString());
+    public UserSignUpRespDTO userSignUpVerify(UserSignUpDTO userSignUpDTO) {
+        UserSignUpRespDTO userSignUpRespDTO = new UserSignUpRespDTO();
+        // 如果还没有注册就发送邮件
+        if (utilityBillUserMapper.selectBatchIds(Collections.singletonList(userSignUpDTO.getEmail())).size()==0) {
+            UUID userUuid = UUID.randomUUID();
+            try{
+                mailSendingService.sendHtmlMailFormQQMail(userSignUpDTO.getEmail(), userSignUpDTO.getUserName(), userUuid.toString());
+            }catch (Exception exception){
+                log.error("邮件发送失败",exception);
+            }
+            userSignUpRespDTO.setVerifyCode(UserSignUpEnum.USER_NEVER_SIGNUP.getValue());
+            userSignUpRespDTO.setSignUpMsg(UserSignUpEnum.USER_NEVER_SIGNUP.getSignUpMsg());
+            userSignUpRespDTO.setInformMsg("登录校验邮件已经发送");
+            userSignUpRespDTO.setUserUuid(userUuid.toString());
+        }else{
+            // 否则表示已经注册了 表示可以直接跳转到到登录页面
+            userSignUpRespDTO.setVerifyCode(UserSignUpEnum.USER_HAS_SIGNUP.getValue());
+            userSignUpRespDTO.setSignUpMsg(UserSignUpEnum.USER_HAS_SIGNUP.getSignUpMsg());
+            userSignUpRespDTO.setInformMsg("登录校验邮件未发送");
+            userSignUpRespDTO.setUserUuid("");
+
         }
+        return userSignUpRespDTO;
     }
 
 
