@@ -83,6 +83,7 @@ public class UserSignUpService implements IUserSignUpService {
      */
     private static final String USER_SIGNUP_KEY = "user:signUp:%s";
     private static final String USER_SIGNUP_EMAIL_UNIQUE_KEY = "user:signUp:email:%s";
+    private static final String USER_SIGNUP_EMAIL_LIST_KEY = "user:signUp:list:%s";
 
 
     @Override
@@ -141,12 +142,16 @@ public class UserSignUpService implements IUserSignUpService {
                 // 邮件key 用于邮件的幂等校验
                 // 用户注册信息的key 用于缓存用户信息
                 // emailKey 永远唯一 但是userKey不一定 emailKey与userKey是1对多的关系
-                // 用户注册时可以多次更新用户信息 取最近一次邮件发送的链接
+                // 用户注册时可以多次更新用户信息 最终多个连接指向同一个用户注册信息
                 String emailKey = String.format(USER_SIGNUP_EMAIL_UNIQUE_KEY, userSignUpDTO.getEmail());
                 String userKey = String.format(USER_SIGNUP_KEY, userUuid);
+                String emailLinkListKey = String.format(USER_SIGNUP_EMAIL_LIST_KEY,userSignUpDTO.getEmail());
+
+                resource.lpush(emailLinkListKey,userUuid);
                 resource.setex(emailKey, exSeconds, getEmailToUserNum(resource, emailKey));
                 resource.setex(userKey, exSeconds, JSON.toJSONString(userSignUpDTO));
                 resource.close();
+
                 mailSendingService.sendHtmlMailFormQQMail(userSignUpDTO.getEmail(), userSignUpDTO.getUserName(), userUuid);
             } catch (Exception exception) {
                 log.error("邮件发送失败", exception);
@@ -276,9 +281,19 @@ public class UserSignUpService implements IUserSignUpService {
                 // 如果存在表示用户已经输入过信息表单，现在正在完成登录校验
                 UserSignUpDTO userSignUpDTO = JSON.parseObject(resource.get(userKey), UserSignUpDTO.class);
                 String emailKey = String.format(USER_SIGNUP_EMAIL_UNIQUE_KEY, userSignUpDTO.getEmail());
+                String emailLinkListKey = String.format(USER_SIGNUP_EMAIL_LIST_KEY,userSignUpDTO.getEmail());
                 if (!resource.exists(emailKey)) {
                     // 如果不存在key 就直接返回 表示用户数据已经插入过了
                     return;
+                }
+                // 从栈空间中弹出一个uuid key 实现幂等校验
+                String latestUserUuidKey = resource.lpop(emailLinkListKey);
+                if(!latestUserUuidKey.equals(userUuid)){
+                    // 如果最新的uuid的key 和 当前的userUuid不相当 表示 改邮箱表示的用户有多次提交记录
+                    // 则需要最新的这个userUuid的key 才能正确获取到用户数据
+                    resource.del(userKey);
+                    userKey = String.format(USER_SIGNUP_KEY,latestUserUuidKey);
+                    userSignUpDTO = JSON.parseObject(resource.get(userKey), UserSignUpDTO.class);
                 }
 
                 String dormitoryIdKey = userSignUpDTO.getDormitoryId();
@@ -294,8 +309,10 @@ public class UserSignUpService implements IUserSignUpService {
                 // 用户数据插入表
                 // 理论来说 此时不应该存在一个用户多次点击链接 重复插表
                 utilityBillUserService.save(utilityBillUserDTOPO);
+
                 resource.del(userKey);
                 resource.del(emailKey);
+                resource.del(emailLinkListKey);
             }
         } catch (Exception exception) {
             log.error(exception.toString(), exception);
