@@ -33,16 +33,16 @@ import java.util.stream.Collectors;
 
 public class UserSignUpService implements IUserSignUpService {
     @Resource
-    private  UniversityCodeMapper universityCodeMapper;
+    private UniversityCodeMapper universityCodeMapper;
     @Resource
-    private  UtilityBillUserMapper utilityBillUserMapper;
+    private UtilityBillUserMapper utilityBillUserMapper;
     @Resource
-    private  MailSendingService mailSendingService;
+    private MailSendingService mailSendingService;
     @Resource
-    private  UtilityBillConvert utilityBillConvert;
+    private UtilityBillConvert utilityBillConvert;
 
     @Resource
-    private  JedisPool jedisPool;
+    private JedisPool jedisPool;
 
     @Resource
     private DormitoryCodeDao dormitoryCodeDao;
@@ -81,8 +81,8 @@ public class UserSignUpService implements IUserSignUpService {
     /**
      * 用户注册时的空间
      */
-    private static final String User_SignUp_Key="user:signUp:%s";
-
+    private static final String USER_SIGNUP_KEY = "user:signUp:%s";
+    private static final String USER_SIGNUP_EMAIL_UNIQUE_KEY = "user:signUp:email:%s";
 
 
     @Override
@@ -135,20 +135,27 @@ public class UserSignUpService implements IUserSignUpService {
             UUID uuid = UUID.randomUUID();
             String fullUUID = uuid.toString().replace("-", "");
             String userUuid = fullUUID.substring(0, 16);
-            try{
+            try {
                 Jedis resource = jedisPool.getResource();
                 long exSeconds = Minutes_5.getSeconds();
-                resource.setex(String.format(User_SignUp_Key, userUuid),exSeconds,JSON.toJSONString(userSignUpDTO));
+                // 邮件key 用于邮件的幂等校验
+                // 用户注册信息的key 用于缓存用户信息
+                // emailKey 永远唯一 但是userKey不一定 emailKey与userKey是1对多的关系
+                // 用户注册时可以多次更新用户信息 取最近一次邮件发送的链接
+                String emailKey = String.format(USER_SIGNUP_EMAIL_UNIQUE_KEY, userSignUpDTO.getEmail());
+                String userKey = String.format(USER_SIGNUP_KEY, userUuid);
+                resource.setex(emailKey, exSeconds, getEmailToUserNum(resource, emailKey));
+                resource.setex(userKey, exSeconds, JSON.toJSONString(userSignUpDTO));
                 resource.close();
                 mailSendingService.sendHtmlMailFormQQMail(userSignUpDTO.getEmail(), userSignUpDTO.getUserName(), userUuid);
-            }catch (Exception exception){
-                log.error("邮件发送失败",exception);
+            } catch (Exception exception) {
+                log.error("邮件发送失败", exception);
             }
             userSignUpRespDTO.setVerifyCode(UserSignUpEnum.USER_NEVER_SIGNUP.getValue());
             userSignUpRespDTO.setSignUpMsg(UserSignUpEnum.USER_NEVER_SIGNUP.getSignUpMsg());
             userSignUpRespDTO.setInformMsg("登录校验邮件已经发送");
             userSignUpRespDTO.setUserUuid(userUuid);
-        }else{
+        } else {
             // 否则表示已经注册了 表示可以直接跳转到到登录页面
             userSignUpRespDTO.setVerifyCode(UserSignUpEnum.USER_HAS_SIGNUP.getValue());
             userSignUpRespDTO.setSignUpMsg(UserSignUpEnum.USER_HAS_SIGNUP.getSignUpMsg());
@@ -159,6 +166,16 @@ public class UserSignUpService implements IUserSignUpService {
         return userSignUpRespDTO;
     }
 
+    private String getEmailToUserNum(Jedis resource, String emailKey) {
+        Integer result = 0;
+        if (resource.exists(emailKey)) {
+            // 如果存在就取数据++ 否则为0
+            Integer originalNum = Integer.valueOf(resource.get(emailKey));
+            originalNum++;
+            result = originalNum;
+        }
+        return String.valueOf(result);
+    }
 
     /**
      * 根据校区uuid 返回学校的住宿信息 住宿区-住宿楼-住宿楼代表编号
@@ -216,11 +233,11 @@ public class UserSignUpService implements IUserSignUpService {
                 floorDTO.setFloor(floorNumNew);
                 floorDTO.setRoom(roomNumNew);
                 floorDTO.setFloorRoom(floorNumNew.concat(roomNumNew));
-                floorDTO.setFloorRoomShow(getFloorRoom(floorNum,roomNum));
+                floorDTO.setFloorRoomShow(getFloorRoom(floorNum, roomNum));
 
                 floorsList.add(floorDTO);
             }
-            floorToRoomMap.put(String.valueOf(floorNum),floorsList);
+            floorToRoomMap.put(String.valueOf(floorNum), floorsList);
         }
 
         Map<String, TreeFloorDTO> result = floorToRoomMap.entrySet()
@@ -244,35 +261,44 @@ public class UserSignUpService implements IUserSignUpService {
         Collections.sort(dormitoryFloorVO.getRoomLocation());
         return dormitoryFloorVO;
     }
-    private String getFloorRoom(Integer floor,Integer room){
-        return String.valueOf(floor*100+room);
+
+    private String getFloorRoom(Integer floor, Integer room) {
+        return String.valueOf(floor * 100 + room);
     }
 
 
     @Override
     public void verifyUserUuid(String userUuid, HttpServletResponse response) {
-        Jedis resource = jedisPool.getResource();
-        String userKey = String.format(User_SignUp_Key, userUuid);
-        Boolean ifExist = resource.exists(userKey);
-        if(ifExist){
-            // 如果存在表示用户已经输入过信息表单，现在正在完成登录校验
-            UserSignUpDTO userSignUpDTO = JSON.parseObject(resource.get(userKey), UserSignUpDTO.class);
-            log.error(userSignUpDTO.toString());
-            UtilityBillUserDTOPO utilityBillUserDTOPO = utilityBillConvert.userSignUpDTOToUtilityBillUserDTOPO(userSignUpDTO);
+        String userKey = String.format(USER_SIGNUP_KEY, userUuid);
+        try (Jedis resource = jedisPool.getResource()) {
+            Boolean ifExist = resource.exists(userKey);
+            if (ifExist) {
+                // 如果存在表示用户已经输入过信息表单，现在正在完成登录校验
+                UserSignUpDTO userSignUpDTO = JSON.parseObject(resource.get(userKey), UserSignUpDTO.class);
+                String emailKey = String.format(USER_SIGNUP_EMAIL_UNIQUE_KEY, userSignUpDTO.getEmail());
+                if (!resource.exists(emailKey)) {
+                    // 如果不存在key 就直接返回 表示用户数据已经插入过了
+                    return;
+                }
 
-            String dormitoryIdKey = userSignUpDTO.getDormitoryId();
+                String dormitoryIdKey = userSignUpDTO.getDormitoryId();
+                String dormitoryId = String.valueOf(dormitoryCodeDao.selectCodeId(dormitoryIdKey));
 
-            String dormitoryId = String.valueOf(dormitoryCodeDao.selectCodeId(dormitoryIdKey));
-
-            utilityBillUserDTOPO.setDormitoryRoomId(
-                    Integer.valueOf(
-                            dormitoryId.concat(userSignUpDTO.getDormitoryRoomId())
-                    )
-            );
-            utilityBillUserDTOPO.setDormitoryId(Integer.valueOf(dormitoryId));
-            utilityBillUserService.save(utilityBillUserDTOPO);
-
-
+                UtilityBillUserDTOPO utilityBillUserDTOPO = utilityBillConvert.userSignUpDTOToUtilityBillUserDTOPO(userSignUpDTO);
+                utilityBillUserDTOPO.setDormitoryRoomId(
+                        Integer.valueOf(
+                                dormitoryId.concat(userSignUpDTO.getDormitoryRoomId())
+                        )
+                );
+                utilityBillUserDTOPO.setDormitoryId(Integer.valueOf(dormitoryId));
+                // 用户数据插入表
+                // 理论来说 此时不应该存在一个用户多次点击链接 重复插表
+                utilityBillUserService.save(utilityBillUserDTOPO);
+                resource.del(userKey);
+                resource.del(emailKey);
+            }
+        } catch (Exception exception) {
+            log.error(exception.toString(), exception);
         }
 
     }

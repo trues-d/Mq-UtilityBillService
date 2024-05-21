@@ -8,6 +8,7 @@ import com.example.consumer.pojo.vo.UniversityInformationListVO;
 import com.example.consumer.service.IUserSignUpService;
 import com.example.consumer.utils.WebResponseUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 @RestController
 @RequestMapping("/utilityBill/signUp")
 @RequiredArgsConstructor
+@Slf4j
 @CrossOrigin
 public class SignUpController {
 
@@ -43,21 +45,43 @@ public class SignUpController {
         return WebResponseUtil.Success(userSignUpService.getDormitoryDetails(universityUuid));
     }
 
+    /**
+     * 获取宿舍楼层信息
+     *
+     * @param : 
+     * @return com.example.consumer.utils.WebResponseUtil<com.example.consumer.pojo.vo.DormitoryFloorVO>
+     */
+    
     @GetMapping("/dropDownList/getDormitoryFloor")
     public WebResponseUtil<DormitoryFloorVO> getDormitoryFloor(){
         return WebResponseUtil.Success(userSignUpService.getDormitoryRoom());
     }
 
+    /**
+     * 用户注册表单  完成注册功能
+     *
+     * @param userSignUpDTO: 用户注册表单
+     * @return com.example.consumer.utils.WebResponseUtil<com.example.consumer.pojo.dto.UserSignUpRespDTO>
+     */
+    
     @PostMapping("/userSignUp")
     public WebResponseUtil<UserSignUpRespDTO> signUp(@Validated  @RequestBody UserSignUpDTO userSignUpDTO){
-        System.out.println(userSignUpDTO.toString());
+        log.info(userSignUpDTO.toString());
         UserSignUpRespDTO userSignUpRespDTO = userSignUpService.userSignUpVerify(userSignUpDTO);
         return WebResponseUtil.Success(userSignUpRespDTO);
     }
 
+    /**
+     * 点击邮件链接完成登录
+     *
+     * @param uuid: 邮件链接中uuid
+     * @param response: HttpServletResponse
+     * @return com.example.consumer.utils.WebResponseUtil<java.lang.Void>
+     */
+
     @GetMapping("/userSignUp/verify")
     public WebResponseUtil<Void> signUpVerify(@RequestParam(name = "signUpUUID") String uuid, HttpServletResponse response){
-        System.out.println(uuid);
+        log.info(String.format("signUpUuid  ==> %s",uuid));
         userSignUpService.verifyUserUuid(uuid,response);
         return WebResponseUtil.Success();
     }
