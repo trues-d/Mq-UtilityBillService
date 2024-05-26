@@ -62,7 +62,8 @@
     │  │  │      └─example  
     │  │  │          └─consumer   
     │  │  │              ├─config       # 配置类 包括Mybatis-Plus配置、MqJackson2JsonMessageConverter序列化、Httpclient配置     
-    │  │  │              ├─controller   # controller 接口服务调用     
+    │  │  │              ├─controller   # controller 接口服务调用
+    │  │  │              ├─convert      # convert dto、vo、po对象转换接口
     │  │  │              ├─exception    # exception 自定义异常和全局异常监听器    
     │  │  │              ├─listener     # listener Mq消息队列消费消息、包括exchange和queue的绑定  😻（关键）   （只有MailDirectQueueListener，其余的未使用）
     │  │  │              │  ├─MailDirectQueueListener       # MailDirectQueueListener 监听direct queue队列  😻（关键）
@@ -70,6 +71,7 @@
     │  │  │              ├─pojo         # pojo 自定义对象     
     │  │  │              │  ├─dto       # dto 数据传输层对象 层级之间信息传输对象   
     │  │  │              │  ├─entity    # entity 实体类型    
+    │  │  │              │  ├─entity    # vo 接口出参  
     │  │  │              │  └─po        # po 持久层对象   
     │  │  │              ├─service      # service 核心服务   
     │  │  │              └─utils        # 工具包 封装了httpclient的请求、Mail邮件发送  😻（关键）   
@@ -88,4 +90,5 @@
 #####  2、基于SMTP协议，向用户发送Mail邮件 ✔  
 #####  3、由于发送邮件是一个耗时的业务，我们通过RabbitMq实现异步的Mail邮件发送 ✔  
 #####  4、定时任务，向容大后勤服务接口发送http请求，判断用户宿舍电费是否低于阈值 ✔  已实现    
-#####  4、幂等校验，通过redis定时key 实现幂校验 ❌ 未实现  
+#####  5、幂等校验，通过redis定时key缓存用户注册数据 同时使用list数据结构（栈）实现用户登录幂等校验 √ 已实现  
+#####  6、用户注册的下拉列表接口完善，共计四个接口 √ 已实现 
