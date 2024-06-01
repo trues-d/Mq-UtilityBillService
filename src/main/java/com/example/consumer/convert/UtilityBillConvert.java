@@ -3,6 +3,7 @@ package com.example.consumer.convert;
 import com.example.consumer.pojo.dto.*;
 import com.example.consumer.pojo.po.DormitoryAreaPO;
 import com.example.consumer.pojo.po.UniversityCodePO;
+import com.example.consumer.pojo.po.UserPO;
 import com.example.consumer.pojo.po.UtilityBillUserDTOPO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -49,5 +50,15 @@ public interface UtilityBillConvert {
             @Mapping(target = "ifDeleted",expression= "java(0)")
     })
     UtilityBillUserDTOPO userSignUpDTOToUtilityBillUserDTOPO(UserSignUpDTO userSignUpDTO);
+
+
+    @Mappings({
+            @Mapping(source ="userName" ,target = "userName"),
+            @Mapping(source = "password",target = "password"),
+            @Mapping(source = "email",target = "email"),
+            @Mapping(target = "uuid",expression = "java(com.baomidou.mybatisplus.core.toolkit.IdWorker.get32UUID())"),
+            @Mapping(target = "isDelete",expression= "java(Boolean.FALSE)")
+    })
+    UserPO userSignUpDTOToUserPO(UserSignUpDTO userSignUpDTO);
 
 }

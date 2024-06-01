@@ -1,5 +1,6 @@
 package com.example.consumer.utils;
 
+import com.example.consumer.config.properties.UserVerifyProperties;
 import com.example.consumer.pojo.dto.MailDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,14 +21,12 @@ import javax.mail.internet.MimeMessage;
 public class MailUtil {
     @Value("${spring.mail.username}")
     private String sender; //邮件发送者
-    @Value("${now.host.ip}")
-    private String ip;//连接地址ip
-
-    @Value("${server.port}")
-    private String port;
 
     @Resource
     private JavaMailSender javaMailSender;
+
+    @Resource
+    private UserVerifyProperties userVerifyProperties;
     private final TemplateEngine templateEngine;
 
 
@@ -67,7 +66,7 @@ public class MailUtil {
             Context context = new Context();
             context.setVariable("userName", mailDTO.getUserName());
             context.setVariable("verifyKeys", mailDTO.getUuid());
-            context.setVariable("href", String.format("http://%s:%s/utilityBill/signUp/userSignUp/verify?signUpUUID=%s", ip, port, mailDTO.getUuid()));
+            context.setVariable("href", String.format(userVerifyProperties.getVerifyUrl(), userVerifyProperties.getBackendIp(), userVerifyProperties.getBackendPort(), mailDTO.getUuid()));
             mimeMessageHelper.setText(templateEngine.process("/html/UserSignUp.html", context));
             javaMailSender.send(mimeMessageHelper.getMimeMessage());
             log.info("===> html邮件发送成功");

@@ -2,16 +2,15 @@ package com.example.consumer.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.example.consumer.config.properties.UserVerifyProperties;
 import com.example.consumer.convert.UtilityBillConvert;
 import com.example.consumer.dao.DormitoryCodeDao;
+import com.example.consumer.exception.BizException;
 import com.example.consumer.mapper.UniversityCodeMapper;
 import com.example.consumer.mapper.UtilityBillUserMapper;
 import com.example.consumer.pojo.dto.*;
 import com.example.consumer.pojo.entity.UserSignUpEnum;
-import com.example.consumer.pojo.po.DormitoryAreaPO;
-import com.example.consumer.pojo.po.DormitoryCodePO;
-import com.example.consumer.pojo.po.UniversityCodePO;
-import com.example.consumer.pojo.po.UtilityBillUserDTOPO;
+import com.example.consumer.pojo.po.*;
 import com.example.consumer.pojo.vo.DormitoryBuildingVO;
 import com.example.consumer.pojo.vo.DormitoryFloorVO;
 import com.example.consumer.pojo.vo.UniversityInformationListVO;
@@ -42,6 +41,8 @@ public class UserSignUpService implements IUserSignUpService {
     private UtilityBillConvert utilityBillConvert;
 
     @Resource
+    private UserVerifyProperties userVerifyProperties ;
+    @Resource
     private JedisPool jedisPool;
 
     @Resource
@@ -49,6 +50,9 @@ public class UserSignUpService implements IUserSignUpService {
 
     @Resource
     private UtilityBillUserService utilityBillUserService;
+
+    @Resource
+    private UserService userService;
 
 
     private static final Integer UUID_SUBSTRING_BEGIN = 0;
@@ -136,8 +140,7 @@ public class UserSignUpService implements IUserSignUpService {
             UUID uuid = UUID.randomUUID();
             String fullUUID = uuid.toString().replace("-", "");
             String userUuid = fullUUID.substring(0, 16);
-            try {
-                Jedis resource = jedisPool.getResource();
+            try(Jedis resource = jedisPool.getResource()) {
                 long exSeconds = Minutes_5.getSeconds();
                 // 邮件key 用于邮件的幂等校验
                 // 用户注册信息的key 用于缓存用户信息
@@ -150,7 +153,6 @@ public class UserSignUpService implements IUserSignUpService {
                 resource.lpush(emailLinkListKey,userUuid);
                 resource.setex(emailKey, exSeconds, getEmailToUserNum(resource, emailKey));
                 resource.setex(userKey, exSeconds, JSON.toJSONString(userSignUpDTO));
-                resource.close();
 
                 mailSendingService.sendHtmlMailFormQQMail(userSignUpDTO.getEmail(), userSignUpDTO.getUserName(), userUuid);
             } catch (Exception exception) {
@@ -172,10 +174,10 @@ public class UserSignUpService implements IUserSignUpService {
     }
 
     private String getEmailToUserNum(Jedis resource, String emailKey) {
-        Integer result = 0;
+        int result = 0;
         if (resource.exists(emailKey)) {
             // 如果存在就取数据++ 否则为0
-            Integer originalNum = Integer.valueOf(resource.get(emailKey));
+            int originalNum = Integer.parseInt(resource.get(emailKey));
             originalNum++;
             result = originalNum;
         }
@@ -308,15 +310,25 @@ public class UserSignUpService implements IUserSignUpService {
                 utilityBillUserDTOPO.setDormitoryId(Integer.valueOf(dormitoryId));
                 // 用户数据插入表
                 // 理论来说 此时不应该存在一个用户多次点击链接 重复插表
-                utilityBillUserService.save(utilityBillUserDTOPO);
+                this.saveUserIntoDB(userSignUpDTO,utilityBillUserDTOPO);
 
                 resource.del(userKey);
                 resource.del(emailKey);
                 resource.del(emailLinkListKey);
+
+                // 页面重定向
+                response.sendRedirect(userVerifyProperties.getSendRedirect());
             }
         } catch (Exception exception) {
             log.error(exception.toString(), exception);
+            throw new BizException(exception.getMessage(),101001);
         }
 
+    }
+
+    private void saveUserIntoDB(UserSignUpDTO userSignUpDTO,UtilityBillUserDTOPO utilityBillUserDTOPO) {
+        UserPO userPO = utilityBillConvert.userSignUpDTOToUserPO(userSignUpDTO);
+        userService.save(userPO);
+        utilityBillUserService.save(utilityBillUserDTOPO);
     }
 }

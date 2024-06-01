@@ -35,20 +35,25 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BindException.class)
     public WebResponseUtil<Object> BindExceptionHandle(Exception exception) {
-        log.warn(exception.toString(), exception);
+        log.error(exception.toString(), exception);
         return WebResponseUtil.error(-1, "传入参数不符合规范，请重新填写表单");
+    }
 
+    @ExceptionHandler(BizException.class)
+    public WebResponseUtil<String> BizExceptionHandle(BizException exception){
+        log.error(exception.toString(), exception);
+        return WebResponseUtil.error(10101,"服务器开小差了");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public WebResponseUtil<Object> MethodArgumentNotValidExceptionHandle(BindException exception){
-        log.warn(exception.toString(),exception);
+        log.error(exception.toString(),exception);
         return WebResponseUtil.error(-1, Objects.requireNonNull(exception.getBindingResult().getFieldError()).getDefaultMessage());
     }
 
     @ExceptionHandler(UnauthorizedException.class)
     public WebResponseUtil<Object> UnauthorizedExceptionHandle(UnauthorizedException exception ){
-        log.warn(exception.getMessage());
+        log.error(exception.getMessage());
         return WebResponseUtil.error(401,exception.getMessage());
     }
 

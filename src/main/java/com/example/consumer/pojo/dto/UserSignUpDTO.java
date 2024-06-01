@@ -26,4 +26,11 @@ public class UserSignUpDTO {
     @NotBlank
     @Length(min = 4,max = 4,message = "请选择宿舍号")
     private String dormitoryRoomId;
+
+    @NotBlank
+    @Length(min = 8,max = 30,message = "请输入密码")
+    private String password;
+    @NotBlank
+    @Length(min = 8,max = 30,message = "请再次输入密码用于校验")
+    private String confirmPassword;
 }
