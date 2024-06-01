@@ -1,27 +1,32 @@
 package com.example.consumer.controller;
 
+import com.example.consumer.config.JwtProperties;
 import com.example.consumer.pojo.dto.UserSignUpDTO;
 import com.example.consumer.pojo.dto.UserSignUpRespDTO;
 import com.example.consumer.pojo.vo.DormitoryBuildingVO;
 import com.example.consumer.pojo.vo.DormitoryFloorVO;
 import com.example.consumer.pojo.vo.UniversityInformationListVO;
 import com.example.consumer.service.IUserSignUpService;
+import com.example.consumer.utils.JwtTool;
 import com.example.consumer.utils.WebResponseUtil;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/utilityBill/signUp")
-@RequiredArgsConstructor
 @Slf4j
 @CrossOrigin
 public class SignUpController {
 
-    private final IUserSignUpService userSignUpService;
+    @Resource
+    private  IUserSignUpService userSignUpService;
+
+    @Resource
+    private  JwtTool jwtTool;
 
     /**
      *  查询学校信息数据用于返回学校信息列表 给前端做下拉列表展示
@@ -48,7 +53,6 @@ public class SignUpController {
     /**
      * 获取宿舍楼层信息
      *
-     * @param : 
      * @return com.example.consumer.utils.WebResponseUtil<com.example.consumer.pojo.vo.DormitoryFloorVO>
      */
     
@@ -86,5 +90,10 @@ public class SignUpController {
         return WebResponseUtil.Success();
     }
 
+    @GetMapping("/getToken")
+    public WebResponseUtil<String> getToken(){
+        String token = jwtTool.createToken("3306", JwtProperties.tokenTTL);
+        return WebResponseUtil.Success(token);
+    }
 
 }

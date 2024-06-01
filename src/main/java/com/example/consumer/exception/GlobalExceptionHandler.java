@@ -46,4 +46,10 @@ public class GlobalExceptionHandler {
         return WebResponseUtil.error(-1, Objects.requireNonNull(exception.getBindingResult().getFieldError()).getDefaultMessage());
     }
 
+    @ExceptionHandler(UnauthorizedException.class)
+    public WebResponseUtil<Object> UnauthorizedExceptionHandle(UnauthorizedException exception ){
+        log.warn(exception.getMessage());
+        return WebResponseUtil.error(401,exception.getMessage());
+    }
+
 }

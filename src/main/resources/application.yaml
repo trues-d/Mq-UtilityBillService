@@ -99,3 +99,13 @@ http:
   #空闲永久连接检查间隔，官方推荐使用这个来检查永久链接的可用性，而不推荐每次请求的时候才去检查
   validateAfterInactivity: 2000
 
+
+mailSendingService:
+  jwt:
+    location: classpath:securityRepository.jks # 秘钥地址
+    alias: ZZGEDA # 秘钥别名
+    password: hmall123 # 秘钥文件密码
+    tokenTTL: 24h # 登录有效期
+  auth:
+    excludePaths: # 无需登录校验的路径
+      - /userSignUp/**

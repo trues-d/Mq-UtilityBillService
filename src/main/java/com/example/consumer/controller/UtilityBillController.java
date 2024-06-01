@@ -1,8 +1,5 @@
 package com.example.consumer.controller;
 
-
-
-import com.example.consumer.service.impl.UserSignUpService;
 import com.example.consumer.service.impl.UtilityBillsService;
 import com.example.consumer.utils.WebResponseUtil;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/utilityBill")
+@RequestMapping("/utilityBill/service")
 @RequiredArgsConstructor
 @CrossOrigin
 public class UtilityBillController {
@@ -27,6 +24,11 @@ public class UtilityBillController {
     @GetMapping("/getBill")
     public WebResponseUtil<Void> getUtilityBill(@RequestParam(required = false ,value = "mail") String recipient){
         utilityBillsService.sendBill(recipient);
+        return WebResponseUtil.Success();
+    }
+
+    @GetMapping("/testMapping")
+    public WebResponseUtil<Void> getTokenTest(){
         return WebResponseUtil.Success();
     }
 
