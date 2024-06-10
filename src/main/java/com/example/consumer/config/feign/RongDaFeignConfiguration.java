@@ -2,9 +2,7 @@ package com.example.consumer.config.feign;
 
 
 import com.alibaba.fastjson.JSONObject;
-import com.example.consumer.dao.UserDao;
-import com.example.consumer.pojo.dto.FeignUserUuidDTO;
-import com.example.consumer.pojo.po.UserPO;
+import com.example.consumer.pojo.dto.RongDaDetailDTO;
 import com.example.consumer.service.IUtilityBillsService;
 import feign.Request;
 import feign.RequestInterceptor;
@@ -23,9 +21,6 @@ public class RongDaFeignConfiguration {
     @Lazy
     @Resource
     private IUtilityBillsService utilityBillsService;
-    @Resource
-    private UserDao userDao;
-
 
     /**
      * 设定拦截器 拦截fien 添加请求头 包括token和content-type
@@ -35,13 +30,15 @@ public class RongDaFeignConfiguration {
     public RequestInterceptor utilityBillInterceptor() {
         return requestTemplate -> {
             byte[] body = requestTemplate.body();
-            FeignUserUuidDTO userUuidDTO = JSONObject.parseObject(body, FeignUserUuidDTO.class);
-            // 添加请求头
-            UserPO userByUuid = userDao.getUserByUuid(userUuidDTO.getUserUuid());
-            String email = userByUuid.getEmail();
-            Map<String, String> headers = utilityBillsService.getHeaders(email);
-            headers.forEach(requestTemplate::header);
-            requestTemplate.body("");  // 将请求体设置为空字符串
+            RongDaDetailDTO userUuidDTO = JSONObject.parseObject(body, RongDaDetailDTO.class);
+            Map<String, String> headers = utilityBillsService.getHeaders(userUuidDTO.getEmail());
+            headers.forEach((key, value) -> {
+                if ("Content-Type".equals(key)) {
+                    requestTemplate.header("Content-Type", "application/json;charset=utf-8");
+                } else {
+                    requestTemplate.header(key, value);
+                }
+            });
         };
     }
 

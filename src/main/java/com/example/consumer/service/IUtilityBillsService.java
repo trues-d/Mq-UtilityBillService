@@ -24,6 +24,7 @@ public interface IUtilityBillsService {
     void sendEmailForMentionCookieNeedToUpdate();
 
     Future<List<DormitoryDetailListVO>> getDormitoryUtilityBillDetailAsyncTask(String userUuid);
+    List<DormitoryDetailListVO> getDormitoryUtilityBillDetailAsyncTaskTest(String userUuid);
     Map<String,String > getHeaders(String email);
 
 }

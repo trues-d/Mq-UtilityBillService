@@ -57,6 +57,7 @@ public class UtilityBillController {
         }
 
         Future<String> utilityBillASyncTack = utilityBillsService.asyncGetUtilityBill(userUuid);
+//        List<DormitoryDetailListVO> dormitoryUtilityBillDetailAsyncTaskTest = utilityBillsService.getDormitoryUtilityBillDetailAsyncTaskTest(UserContext.getUser());
         Future<List<DormitoryDetailListVO>> dormitoryUtilityBillDetailAsyncTask = utilityBillsService.getDormitoryUtilityBillDetailAsyncTask(UserContext.getUser());
         UserInformationVO userInformation = utilityBillsService.getUserInformation(userUuid);
         try {
@@ -95,5 +96,7 @@ public class UtilityBillController {
     public WebResponseUtil<Void> getTokenTest() {
         return WebResponseUtil.Success();
     }
+
+
 
 }

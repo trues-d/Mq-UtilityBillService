@@ -347,15 +347,61 @@ public class UtilityBillsService implements IUtilityBillsService {
     @Async
     @Override
     public Future<List<DormitoryDetailListVO>> getDormitoryUtilityBillDetailAsyncTask(String userUuid) {
-        RongDaDormitoryDetail dormitoryDetail = rongDaFeignClient.getDormitoryDetail(new FeignUserUuidDTO(userUuid));
+        UserPO userByUuid = userDao.getUserByUuid(userUuid);
+        String email = userByUuid.getEmail();
+        UtilityBillUserDTO utilityBillUserDTOExceptMail = utilityBillUserMapper.getUtilityBillUserExceptMail(email);
+        RongDaDetailDTO rongDaDetailDTO = new RongDaDetailDTO();
+        rongDaDetailDTO.setAreaId(utilityBillUserDTOExceptMail.getUniversityCodeId());
+        rongDaDetailDTO.setBuildingCode(utilityBillUserDTOExceptMail.getDormitoryId());
+        rongDaDetailDTO.setRoomCode(utilityBillUserDTOExceptMail.getDormitoryRoomId());
+        rongDaDetailDTO.setFloorCode(utilityBillUserDTOExceptMail.getDormitoryRoomId()/100);
+        rongDaDetailDTO.setEmail(email);
+
+        RongDaDormitoryDetail dormitoryDetail = rongDaFeignClient.getDormitoryDetail(rongDaDetailDTO);
+        log.info(dormitoryDetail.toString());
         List<DormitoryDetailListVO> collect = dormitoryDetail.getRows().stream().map(item -> {
             DormitoryDetailListVO dormitoryDetailListVO = new DormitoryDetailListVO();
-            dormitoryDetailListVO.setWeek(item.getWeek());
-            dormitoryDetailListVO.setPayTime(item.getPayTime());
-            dormitoryDetailListVO.setPayMoney(item.getPayMoney());
+            dormitoryDetailListVO.setWeek(item.getBuyusingtpe());
+            dormitoryDetailListVO.setPayTime(item.getDatetime());
+            dormitoryDetailListVO.setPayMoney(Double.parseDouble(item.getMoney()));
             return dormitoryDetailListVO;
         }).collect(Collectors.toList());
+        if(collect.size()>=20){
+            List<DormitoryDetailListVO> dormitoryDetailListVOS = collect.subList(0, 20);
+            return new AsyncResult<>(dormitoryDetailListVOS);
+        }else {
+            return new AsyncResult<>(collect);
+        }
+    }
 
-        return new  AsyncResult<>(collect);
+
+    @Override
+    public List<DormitoryDetailListVO> getDormitoryUtilityBillDetailAsyncTaskTest(String userUuid) {
+
+        UserPO userByUuid = userDao.getUserByUuid(userUuid);
+        String email = userByUuid.getEmail();
+        UtilityBillUserDTO utilityBillUserDTOExceptMail = utilityBillUserMapper.getUtilityBillUserExceptMail(email);
+        RongDaDetailDTO rongDaDetailDTO = new RongDaDetailDTO();
+        rongDaDetailDTO.setAreaId(utilityBillUserDTOExceptMail.getUniversityCodeId());
+        rongDaDetailDTO.setBuildingCode(utilityBillUserDTOExceptMail.getDormitoryId());
+        rongDaDetailDTO.setRoomCode(utilityBillUserDTOExceptMail.getDormitoryRoomId());
+        rongDaDetailDTO.setFloorCode(utilityBillUserDTOExceptMail.getDormitoryRoomId()/100);
+        rongDaDetailDTO.setEmail(email);
+
+        RongDaDormitoryDetail dormitoryDetail = rongDaFeignClient.getDormitoryDetail(rongDaDetailDTO);
+        log.info(dormitoryDetail.toString());
+        List<DormitoryDetailListVO> collect = dormitoryDetail.getRows().stream().map(item -> {
+            DormitoryDetailListVO dormitoryDetailListVO = new DormitoryDetailListVO();
+            dormitoryDetailListVO.setWeek(item.getBuyusingtpe());
+            dormitoryDetailListVO.setPayTime(item.getDatetime());
+            dormitoryDetailListVO.setPayMoney(Double.parseDouble(item.getMoney()));
+            return dormitoryDetailListVO;
+        }).collect(Collectors.toList());
+        if(collect.size()>=20){
+            List<DormitoryDetailListVO> dormitoryDetailListVOS = collect.subList(0, 20);
+            return dormitoryDetailListVOS;
+        }else {
+            return collect;
+        }
     }
 }
