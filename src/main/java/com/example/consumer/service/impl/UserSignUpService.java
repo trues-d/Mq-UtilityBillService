@@ -2,9 +2,11 @@ package com.example.consumer.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.example.consumer.config.JwtProperties;
 import com.example.consumer.config.properties.UserVerifyProperties;
 import com.example.consumer.convert.UtilityBillConvert;
 import com.example.consumer.dao.DormitoryCodeDao;
+import com.example.consumer.dao.UserDao;
 import com.example.consumer.exception.BizException;
 import com.example.consumer.mapper.UniversityCodeMapper;
 import com.example.consumer.mapper.UtilityBillUserMapper;
@@ -15,8 +17,10 @@ import com.example.consumer.pojo.vo.DormitoryBuildingVO;
 import com.example.consumer.pojo.vo.DormitoryFloorVO;
 import com.example.consumer.pojo.vo.UniversityInformationListVO;
 import com.example.consumer.service.IUserSignUpService;
+import com.example.consumer.utils.JwtTool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -34,7 +38,8 @@ public class UserSignUpService implements IUserSignUpService {
     @Resource
     private UniversityCodeMapper universityCodeMapper;
     @Resource
-    private UtilityBillUserMapper utilityBillUserMapper;
+    public JwtTool jwtTool;
+
     @Resource
     private MailSendingService mailSendingService;
     @Resource
@@ -53,6 +58,9 @@ public class UserSignUpService implements IUserSignUpService {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private UserDao userDao;
 
 
     private static final Integer UUID_SUBSTRING_BEGIN = 0;
@@ -134,8 +142,9 @@ public class UserSignUpService implements IUserSignUpService {
     @Override
     public UserSignUpRespDTO userSignUpVerify(UserSignUpDTO userSignUpDTO) {
         UserSignUpRespDTO userSignUpRespDTO = new UserSignUpRespDTO();
+        UserPO userPOByEmail = userDao.getByEmail(userSignUpDTO.getEmail());
         // 如果还没有注册就发送邮件
-        if (utilityBillUserMapper.selectBatchIds(Collections.singletonList(userSignUpDTO.getEmail())).size()==0) {
+        if (Objects.isNull(userPOByEmail)) {
             // 16位的uuid
             UUID uuid = UUID.randomUUID();
             String fullUUID = uuid.toString().replace("-", "");
@@ -275,6 +284,7 @@ public class UserSignUpService implements IUserSignUpService {
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void verifyUserUuid(String userUuid, HttpServletResponse response) {
         String userKey = String.format(USER_SIGNUP_KEY, userUuid);
         try (Jedis resource = jedisPool.getResource()) {
@@ -310,25 +320,34 @@ public class UserSignUpService implements IUserSignUpService {
                 utilityBillUserDTOPO.setDormitoryId(Integer.valueOf(dormitoryId));
                 // 用户数据插入表
                 // 理论来说 此时不应该存在一个用户多次点击链接 重复插表
-                this.saveUserIntoDB(userSignUpDTO,utilityBillUserDTOPO);
+                UserPO userPO = this.saveUserIntoDB(userSignUpDTO, utilityBillUserDTOPO);
 
                 resource.del(userKey);
                 resource.del(emailKey);
                 resource.del(emailLinkListKey);
 
-                // 页面重定向
-                response.sendRedirect(userVerifyProperties.getSendRedirect());
+                // 页面重定向 同时传送token
+                String key = jwtTool.createToken(userPO.getUuid(), JwtProperties.tokenTTL);
+                response.sendRedirect(String.format(userVerifyProperties.getSendRedirect(),key));
             }
         } catch (Exception exception) {
             log.error(exception.toString(), exception);
             throw new BizException(exception.getMessage(),101001);
         }
-
     }
 
-    private void saveUserIntoDB(UserSignUpDTO userSignUpDTO,UtilityBillUserDTOPO utilityBillUserDTOPO) {
+    private UserPO saveUserIntoDB(UserSignUpDTO userSignUpDTO,UtilityBillUserDTOPO utilityBillUserDTOPO) {
         UserPO userPO = utilityBillConvert.userSignUpDTOToUserPO(userSignUpDTO);
+        String email = userPO.getEmail().trim();
+        String password = userPO.getPassword().trim();
+        String userName = userPO.getUserName().trim();
+
+        userPO.setEmail(email);
+        userPO.setPassword(password);
+        userPO.setUserName(userName);
+
         userService.save(userPO);
         utilityBillUserService.save(utilityBillUserDTOPO);
+        return userPO;
     }
 }

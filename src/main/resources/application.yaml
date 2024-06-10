@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: default, dev
+    active: default, pro
 
   # 数据源
   datasource:
@@ -68,6 +68,7 @@ mybatis-plus:
   configuration:
     #在映射实体或者属性时，将数据库中表名和字段名中的下划线去掉，按照驼峰命名法映射 address_book ---> addressBook
     map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl #开启sql日志
     #配置Mapper映射文件
 #    mapper-locations: classpath:/mappers/*.xml
 #  global-config:
@@ -100,7 +101,14 @@ http:
   validateAfterInactivity: 2000
 
 
+feign:
+  hystrix:
+    enabled: true # 开启Feign的熔断功能
+
 mailSendingService:
+  sudoEmail: 1293177585@qq.com
+  rongDaClientHost: https://application.xiaofubao.com
+  rongDaDormitoryDetail: /app/order/bussisdw/queryListData
   jwt:
     location: classpath:securityRepository.jks # 秘钥地址
     alias: ZZGEDA # 秘钥别名

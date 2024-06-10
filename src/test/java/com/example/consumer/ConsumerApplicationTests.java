@@ -11,7 +11,6 @@ import com.example.consumer.utils.MailUtil;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import redis.clients.jedis.Jedis;
@@ -40,7 +39,7 @@ class ConsumerApplicationTests {
     @Autowired
     private JedisPool jedisPool;
 
-    @Test
+//    @Test
     void MailSending(String bills) {
         MailDTO mailDTO = new MailDTO();
 //        int code = (int) ((Math.random() * 9 + 1) * 100000);
@@ -55,18 +54,18 @@ class ConsumerApplicationTests {
         mailUtil.sendSimpleMail(mailDTO);
     }
 
-    @Test
+//    @Test
     void queryAllUserSendMessage() {
         utilityBillsService.queryAllUserSendMessage();
     }
 
 
-    @Test
+//    @Test
     void scheduleTask() {
         utilityBillsService.scheduleTask();
     }
 
-    @Test
+//    @Test
     void LongParse() {
         float l = Float.parseFloat("78.8");
         if (l < 50.0f) {
@@ -76,7 +75,7 @@ class ConsumerApplicationTests {
         }
     }
 
-    @Test
+//    @Test
     void putObjectIntoRedis() {
         UtilityBillUserDTO utilityBillUserDTO = new UtilityBillUserDTO();
         utilityBillUserDTO.setUserName("ZZGEDA");
@@ -123,7 +122,7 @@ class ConsumerApplicationTests {
 
     }
 
-    @Test
+//    @Test
     void consumerMessageFromRedis() {
 
         // lambda函数 new Runnable

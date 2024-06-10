@@ -6,6 +6,7 @@ import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -15,6 +16,7 @@ import java.util.concurrent.Executor;
 
 @Configuration
 @EnableScheduling
+@EnableAsync
 public class SchedulingConfig implements SchedulingConfigurer , AsyncConfigurer {
 
     // 定义池子的容量
@@ -43,7 +45,6 @@ public class SchedulingConfig implements SchedulingConfigurer , AsyncConfigurer 
      * 以及配置定时任务的其他属性。通过使用 ScheduledTaskRegistrar，可以更灵活地管理和控制应用中的定时任务，包括设置定时任务的执行频率、延迟时间等
      *
      * @param taskRegistrar:
-     * @return [org.springframework.scheduling.config.ScheduledTaskRegistrar]
      */
 
     @Override

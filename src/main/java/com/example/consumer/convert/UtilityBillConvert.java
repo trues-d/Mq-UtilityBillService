@@ -61,4 +61,6 @@ public interface UtilityBillConvert {
     })
     UserPO userSignUpDTOToUserPO(UserSignUpDTO userSignUpDTO);
 
+    UserPO UserLoginDTOToUserPO(UserLoginDTO userLoginDTO);
+
 }

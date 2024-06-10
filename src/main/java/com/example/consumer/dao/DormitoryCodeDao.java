@@ -1,6 +1,5 @@
 package com.example.consumer.dao;
 
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.consumer.mapper.DormitoryAreaMapper;
@@ -8,13 +7,13 @@ import com.example.consumer.mapper.DormitoryCodeMapper;
 import com.example.consumer.pojo.po.DormitoryAreaPO;
 import com.example.consumer.pojo.po.DormitoryCodePO;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Component
+@Repository
 @RequiredArgsConstructor
 public class DormitoryCodeDao {
     private final DormitoryCodeMapper dormitoryCodeMapper;

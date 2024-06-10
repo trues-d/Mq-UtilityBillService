@@ -1,43 +1,74 @@
 package com.example.consumer.service.impl;
 
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
+import com.example.consumer.dao.UserDao;
+import com.example.consumer.feign.RongDaFeignClient;
 import com.example.consumer.mapper.UtilityBillMapper;
 import com.example.consumer.mapper.UtilityBillUserMapper;
-import com.example.consumer.pojo.dto.MailSendingMqDTO;
-import com.example.consumer.pojo.dto.UtilityBillDTO;
-import com.example.consumer.pojo.dto.UtilityBillUserDTOLocationDTO;
+import com.example.consumer.pojo.dto.*;
 import com.example.consumer.pojo.entity.PostRequestEnum;
-import com.example.consumer.pojo.dto.UtilityBillUserDTO;
+import com.example.consumer.pojo.po.*;
+import com.example.consumer.pojo.vo.DormitoryDetailListVO;
+import com.example.consumer.pojo.vo.UserInformationVO;
 import com.example.consumer.service.IUtilityBillsService;
 import com.example.consumer.utils.HttpUtil;
+import com.example.consumer.utils.UserContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
+import javax.annotation.Resource;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class UtilityBillsService implements IUtilityBillsService {
     //    @Resource //依赖注入 与@Autowired一致 @Resource默认按byName自动注入
-    private final HttpUtil httpUtil;
-    private final UtilityBillUserMapper utilityBillUserMapper;
-    private final UtilityBillMapper utilityBillMapper;
-    private final RabbitTemplate rabbitTemplate;
+    @Resource
+    private  HttpUtil httpUtil;
+    @Resource
+    private  UtilityBillUserMapper utilityBillUserMapper;
+    @Resource
+    private  UtilityBillMapper utilityBillMapper;
+    @Resource
+    private  UtilityBillUserService utilityBillUserService;
+    @Resource
+    private  DormitoryCodeService dormitoryCodeService;
+    @Resource
+    private  UniversityCodeService universityCodeService;
+    @Resource
+    private  DormitoryAreaService dormitoryAreaService;
+    @Resource
+    private  RabbitTemplate rabbitTemplate;
     private static final String utilityBillUrl = "https://application.xiaofubao.com/app/electric/queryISIMSRoomSurplus";
-    private final JedisPool jedisPool;
+    @Resource
+    private  JedisPool jedisPool;
+
     private final Float utilityBillThreshold = 25.0f;
+
+    @Resource
+    private UserDao userDao;
+    @Value("mailSendingService.sudoEmail")
+    private  String sudoEmail;
+
+    @Resource
+    private RongDaFeignClient rongDaFeignClient;
 
 
     /**
@@ -51,7 +82,6 @@ public class UtilityBillsService implements IUtilityBillsService {
         String bill;
         UtilityBillDTO utilityBillDTO;
         // 如果不用https会发生重定型 然后需要手动重定向发送请求
-
 
         UtilityBillUserDTO utilityBillUserDTOExceptMail = utilityBillUserMapper.getUtilityBillUserExceptMail(userRecipient);
         // 为空则返回
@@ -68,14 +98,13 @@ public class UtilityBillsService implements IUtilityBillsService {
         utilityBillDTO.setYmId("");
         utilityBillDTO.setPlatform("");
 
-
         try {
             // 基于反射将utilityBillDTO处理成Map对象
             JsonNode jsonNode = new ObjectMapper().
-                    readTree(httpUtil.doPost(utilityBillUrl, getFormBody(utilityBillDTO), getHeaders(userRecipient))).
+                    readTree(httpUtil.doPost(utilityBillUrl, this.getFormBody(utilityBillDTO), this.getHeaders(userRecipient))).
                     get("data").get("soc");
             bill = jsonNode.asText();
-            log.info(String.format("用户：%s的宿舍电量还剩%s",userRecipient,bill));
+            log.info(String.format("用户：%s的宿舍电量还剩%s", userRecipient, bill));
         } catch (Exception e) {
             log.error(e.toString());
             return "";
@@ -97,8 +126,8 @@ public class UtilityBillsService implements IUtilityBillsService {
      */
 
     @Override
-    public void sendBill(String recipient) {
-        String dormitoryBill = getUtilityBill(recipient);
+    public Boolean sendBill(String recipient) {
+        String dormitoryBill = this.getUtilityBill(recipient);
         if (!dormitoryBill.isEmpty()) {
             // lambda 传入一个自定义方法 这种使用就可以算作是回调函数了
             rabbitTemplate.convertAndSend("mail.direct", "mail", new MailSendingMqDTO(recipient, dormitoryBill), (message -> {
@@ -106,8 +135,26 @@ public class UtilityBillsService implements IUtilityBillsService {
                 return message;
             }));
             log.info("====>  mq异步消息发送成功");
+            return Boolean.TRUE;
         }
+        return Boolean.FALSE;
+    }
 
+    public void sendEmailForMentionCookieNeedToUpdate(){
+        rabbitTemplate.convertAndSend("mail.direct", "mail", new MailSendingMqDTO(sudoEmail, "赶紧更新邮件服务的cookie"), (message -> {
+            message.getMessageProperties().setMessageId(sudoEmail);
+            return message;
+        }));
+    }
+
+    @Async
+    public Future<String> asyncGetUtilityBill(String userUuid){
+        log.info("异步查询用户宿舍水电费task ====> 开始");
+        UserPO userByUuid = userDao.getUserByUuid(userUuid);
+        String email = userByUuid.getEmail();
+        String utilityBill = this.getUtilityBill(email);
+        log.info("异步查询用户宿舍水电费task <==== 结束");
+        return  new AsyncResult<>(utilityBill);
     }
 
     // 定时任务 每天下午14点执行
@@ -179,7 +226,7 @@ public class UtilityBillsService implements IUtilityBillsService {
                             return message;
                         }));
                         log.info("<===== Mq异步消息发送成功");
-                    }else{
+                    } else {
                         log.info(String.format("<===== 用户%s无须发送", userItem.getUserName()));
                     }
                 }
@@ -220,6 +267,7 @@ public class UtilityBillsService implements IUtilityBillsService {
         return formBody;
     }
 
+    @Override
     public Map<String, String> getHeaders(String userRecipient) throws RuntimeException {
         Map<String, String> headers = new HashMap<>();
         // 设置请求头
@@ -237,4 +285,77 @@ public class UtilityBillsService implements IUtilityBillsService {
     }
 
 
+    @Override
+    public UserInformationVO getUserInformation(String userUuid) {
+
+        UserPO userByUuid = userDao.getUserByUuid(userUuid);
+        String email = userByUuid.getEmail();
+        String userName = userByUuid.getUserName();
+        UtilityBillUserDTOPO userDorInformation = utilityBillUserService.getById(email);
+
+
+        String universityCodeId = userDorInformation.getUniversityCodeId();
+        Integer dormitoryId = userDorInformation.getDormitoryId();
+        Integer dormitoryRoomId = userDorInformation.getDormitoryRoomId();
+        dormitoryRoomId = dormitoryRoomId % (dormitoryId * 1000);
+
+        // 校区拼接出 浙江工业大学-屏峰
+        UniversityCodePO universityAndArea = universityCodeService.getById(universityCodeId);
+        String result_university = universityAndArea.getUniversityName().concat(StrUtil.isNotBlank(universityAndArea.getUniversityRegion()) ? '-' + universityAndArea.getUniversityRegion():"");
+
+        // 正则化匹配出 10号楼
+        DormitoryCodePO dormitoryCodePOById = dormitoryCodeService.getById(String.valueOf(dormitoryId));
+        String dormitoryBuildingName = dormitoryCodePOById.getName();
+        String dormitoryAreaUuid = dormitoryCodePOById.getDormitoryAreaUuid();
+
+
+        int buildingIndex = dormitoryBuildingName.indexOf("号");
+        buildingIndex -= 2;
+        String substring = dormitoryBuildingName.substring(buildingIndex);
+        String buildingName = substring.startsWith("0") ? substring.substring(1):substring;
+
+
+        // 宿舍区名字 家和东苑
+        DormitoryAreaPO dormitoryAreaPO = dormitoryAreaService.getById(dormitoryAreaUuid);
+        String dormitoryAreaName = dormitoryAreaPO.getName();
+        dormitoryAreaName = dormitoryAreaName.concat("-" + buildingName);
+
+        UserInformationVO userInformationVO = new UserInformationVO();
+        userInformationVO.setUserName(userName);
+        userInformationVO.setUniversityName(result_university);
+        userInformationVO.setDormitoryBuildingName(dormitoryAreaName);
+        userInformationVO.setDormitoryRoomName(String.valueOf(dormitoryRoomId));
+        userInformationVO.setUtilityBillUserPOJSONStr(JSON.toJSONString(userDorInformation));
+        userInformationVO.setIsSubscribe(userDorInformation.getIfDeleted()==0);
+        userInformationVO.setUserUuid(UserContext.getUser());
+        userInformationVO.setEmail(email);
+
+        log.info("用户信息查询完毕");
+        return userInformationVO;
+    }
+
+
+    @Override
+    public void modifySubscribe(SubscribeModifyDTO subscribeModifyDTO) {
+        UtilityBillUserDTOPO utilityBillUserPO = JSON.parseObject(subscribeModifyDTO.getUtilityBillUserJson(), UtilityBillUserDTOPO.class);
+        Boolean ifWanToSubscribe = subscribeModifyDTO.getIfSubscribe();
+        utilityBillUserPO.setIfDeleted(Boolean.TRUE.equals(ifWanToSubscribe) ? 0:1);
+        userDao.updateUtilityBillUserSubscribeStatus(utilityBillUserPO);
+    }
+
+
+    @Async
+    @Override
+    public Future<List<DormitoryDetailListVO>> getDormitoryUtilityBillDetailAsyncTask(String userUuid) {
+        RongDaDormitoryDetail dormitoryDetail = rongDaFeignClient.getDormitoryDetail(new FeignUserUuidDTO(userUuid));
+        List<DormitoryDetailListVO> collect = dormitoryDetail.getRows().stream().map(item -> {
+            DormitoryDetailListVO dormitoryDetailListVO = new DormitoryDetailListVO();
+            dormitoryDetailListVO.setWeek(item.getWeek());
+            dormitoryDetailListVO.setPayTime(item.getPayTime());
+            dormitoryDetailListVO.setPayMoney(item.getPayMoney());
+            return dormitoryDetailListVO;
+        }).collect(Collectors.toList());
+
+        return new  AsyncResult<>(collect);
+    }
 }

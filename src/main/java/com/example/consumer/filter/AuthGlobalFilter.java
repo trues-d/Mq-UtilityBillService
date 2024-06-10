@@ -15,15 +15,15 @@ import java.util.HashMap;
 
 @Slf4j
 public class AuthGlobalFilter implements Filter {
-    private static final String authorization = "authorization";
+    private static final String AUTHORIZATION = "token";
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws UnauthorizedException, IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse resp = (HttpServletResponse) response;
-        String token = req.getHeader(authorization);
+        String token = req.getHeader(AUTHORIZATION);
         String url = req.getRequestURI();
-        if (url.startsWith("/utilityBill/signUp/")) {
+        if (StrUtil.startWithAny(url,"/utilityBill/signUp/","/utilityBill/login/","/utilityBill/service/")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -36,7 +36,7 @@ public class AuthGlobalFilter implements Filter {
             PrintWriter writer = resp.getWriter();
             HashMap<String, String> resultMap = new HashMap<>();
             resultMap.put("code", "100399");
-            resultMap.put("msg", "token 缺失");
+            resultMap.put("msg", "请先登录");
             String jsonString = JSON.toJSONString(resultMap);
             writer.write(jsonString);
         }

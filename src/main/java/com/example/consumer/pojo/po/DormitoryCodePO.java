@@ -1,6 +1,7 @@
 package com.example.consumer.pojo.po;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.github.jeffreyning.mybatisplus.anno.MppMultiId;
 import lombok.Data;
@@ -10,7 +11,7 @@ import lombok.Data;
 public class DormitoryCodePO {
 
     @MppMultiId
-    @TableField("code_id")
+    @TableId("code_id")
     private Long codeId;
 
     @MppMultiId

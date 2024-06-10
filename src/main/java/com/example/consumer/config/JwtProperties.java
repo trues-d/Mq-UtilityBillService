@@ -18,5 +18,5 @@ public class JwtProperties {
     @Value("${mailSendingService.jwt.alias}")
     private String alias;  //作者
 
-    public static final  Duration tokenTTL = Duration.ofMinutes(2L);  //传入时间 消失
+    public static final  Duration tokenTTL = Duration.ofHours(5L);  //传入时间 消失
 }

@@ -36,7 +36,7 @@ public class WebConfiguration implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authInterceptor)
                 .addPathPatterns("/utilityBill/service/**")
-                .excludePathPatterns("/utilityBill/signUp/**");
+                .excludePathPatterns("/utilityBill/signUp/**","/utilityBill/service/**");
     }
 }
 
