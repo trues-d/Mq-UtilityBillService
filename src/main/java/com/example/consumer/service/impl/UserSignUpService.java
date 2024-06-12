@@ -46,7 +46,7 @@ public class UserSignUpService implements IUserSignUpService {
     private UtilityBillConvert utilityBillConvert;
 
     @Resource
-    private UserVerifyProperties userVerifyProperties ;
+    private UserVerifyProperties userVerifyProperties;
     @Resource
     private JedisPool jedisPool;
 
@@ -58,6 +58,9 @@ public class UserSignUpService implements IUserSignUpService {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private UniversityCodeService universityCodeService;
 
     @Resource
     private UserDao userDao;
@@ -100,7 +103,7 @@ public class UserSignUpService implements IUserSignUpService {
 
     @Override
     public UniversityInformationListVO getUniversityInformation() {
-        List<UniversityCodePO> universityAndArea = universityCodeMapper.selectList(null);
+        List<UniversityCodePO> universityAndArea = universityCodeService.list();
 
         HashMap<String, UniversityInformationDTO> resultMap = new HashMap<>();
         universityAndArea.forEach(universityCodePO -> {
@@ -149,7 +152,7 @@ public class UserSignUpService implements IUserSignUpService {
             UUID uuid = UUID.randomUUID();
             String fullUUID = uuid.toString().replace("-", "");
             String userUuid = fullUUID.substring(0, 16);
-            try(Jedis resource = jedisPool.getResource()) {
+            try (Jedis resource = jedisPool.getResource()) {
                 long exSeconds = Minutes_5.getSeconds();
                 // 邮件key 用于邮件的幂等校验
                 // 用户注册信息的key 用于缓存用户信息
@@ -157,9 +160,9 @@ public class UserSignUpService implements IUserSignUpService {
                 // 用户注册时可以多次更新用户信息 最终多个连接指向同一个用户注册信息
                 String emailKey = String.format(USER_SIGNUP_EMAIL_UNIQUE_KEY, userSignUpDTO.getEmail());
                 String userKey = String.format(USER_SIGNUP_KEY, userUuid);
-                String emailLinkListKey = String.format(USER_SIGNUP_EMAIL_LIST_KEY,userSignUpDTO.getEmail());
+                String emailLinkListKey = String.format(USER_SIGNUP_EMAIL_LIST_KEY, userSignUpDTO.getEmail());
 
-                resource.lpush(emailLinkListKey,userUuid);
+                resource.lpush(emailLinkListKey, userUuid);
                 resource.setex(emailKey, exSeconds, getEmailToUserNum(resource, emailKey));
                 resource.setex(userKey, exSeconds, JSON.toJSONString(userSignUpDTO));
 
@@ -293,18 +296,18 @@ public class UserSignUpService implements IUserSignUpService {
                 // 如果存在表示用户已经输入过信息表单，现在正在完成登录校验
                 UserSignUpDTO userSignUpDTO = JSON.parseObject(resource.get(userKey), UserSignUpDTO.class);
                 String emailKey = String.format(USER_SIGNUP_EMAIL_UNIQUE_KEY, userSignUpDTO.getEmail());
-                String emailLinkListKey = String.format(USER_SIGNUP_EMAIL_LIST_KEY,userSignUpDTO.getEmail());
+                String emailLinkListKey = String.format(USER_SIGNUP_EMAIL_LIST_KEY, userSignUpDTO.getEmail());
                 if (!resource.exists(emailKey)) {
                     // 如果不存在key 就直接返回 表示用户数据已经插入过了
                     return;
                 }
                 // 从栈空间中弹出一个uuid key 实现幂等校验
                 String latestUserUuidKey = resource.lpop(emailLinkListKey);
-                if(!latestUserUuidKey.equals(userUuid)){
+                if (!latestUserUuidKey.equals(userUuid)) {
                     // 如果最新的uuid的key 和 当前的userUuid不相当 表示 改邮箱表示的用户有多次提交记录
                     // 则需要最新的这个userUuid的key 才能正确获取到用户数据
                     resource.del(userKey);
-                    userKey = String.format(USER_SIGNUP_KEY,latestUserUuidKey);
+                    userKey = String.format(USER_SIGNUP_KEY, latestUserUuidKey);
                     userSignUpDTO = JSON.parseObject(resource.get(userKey), UserSignUpDTO.class);
                 }
 
@@ -328,15 +331,15 @@ public class UserSignUpService implements IUserSignUpService {
 
                 // 页面重定向 同时传送token
                 String key = jwtTool.createToken(userPO.getUuid(), JwtProperties.tokenTTL);
-                response.sendRedirect(String.format(userVerifyProperties.getSendRedirect(),key));
+                response.sendRedirect(String.format(userVerifyProperties.getSendRedirect(), key));
             }
         } catch (Exception exception) {
             log.error(exception.toString(), exception);
-            throw new BizException(exception.getMessage(),101001);
+            throw new BizException(exception.getMessage(), 101001);
         }
     }
 
-    private UserPO saveUserIntoDB(UserSignUpDTO userSignUpDTO,UtilityBillUserDTOPO utilityBillUserDTOPO) {
+    private UserPO saveUserIntoDB(UserSignUpDTO userSignUpDTO, UtilityBillUserDTOPO utilityBillUserDTOPO) {
         UserPO userPO = utilityBillConvert.userSignUpDTOToUserPO(userSignUpDTO);
         String email = userPO.getEmail().trim();
         String password = userPO.getPassword().trim();
