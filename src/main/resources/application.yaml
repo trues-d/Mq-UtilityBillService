@@ -40,6 +40,7 @@ spring:
     host: smtp.qq.com #SMTP服务器地址   qq邮箱服务器
     username: 1293177585@qq.com #登陆账号  发送方邮箱
     password: rpogcrobehvrjhjf #登陆密码（或授权码）
+    port: 587
       # 解析页
     properties:
       mail:
@@ -57,6 +58,7 @@ spring:
         max-file-size: 10MB #限制单个文件大小
         max-request-size: 50MB #限制请求总量
     default-encoding: utf-8
+
   thymeleaf:
     cache: false
     prefix: classpath:/templates
@@ -108,7 +110,7 @@ feign:
 mailSendingService:
   sudoEmail: 1293177585@qq.com
   rongDaClientHost: https://application.xiaofubao.com
-  rongDaDormitoryDetail: /app/order/bussisdw/queryListData
+  rongDaDormitoryDetail: /app/electric/queryISIMSRoomBuyRecord
   jwt:
     location: classpath:securityRepository.jks # 秘钥地址
     alias: ZZGEDA # 秘钥别名

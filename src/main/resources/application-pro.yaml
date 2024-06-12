@@ -1,25 +1,25 @@
 server:
   port: 18081
-rabbitmq:
-  host:  # 你的虚拟机IP
+
+rabbitMq:
+  host: 8.130.99.124 # 你的虚拟机IP
   port: 34746 # 端口
   virtual-host: /Learning # 虚拟主机
   username: ZZGEDA_Learning # 用户名
-  password: # 密码
+  password: zZ-szshyjbz16D # 密码
 
 
 mysql:
-  host:  #生产环境的host
-  port: 33170 #生产环境的port
+  host: 8.130.99.124
+  port: 33170
   username: root
-  password: zZ-szshyjbz16D #myal密码
+  password: zZ-szshyjbz16D
   database: ssm_db
 
-
 jedis:
-  host: 
+  host: 8.130.99.124
   port: 36689
-  password: 
+  password: zZ-szshyjbz16D
   database: 0    #redis数据库的索引号
   maxIdle: 100  #连接池最大空闲数
   minIdle: 0  #连接池最小空闲数
@@ -27,3 +27,20 @@ jedis:
   maxWaitMillis: 500  #这是当连接池耗尽时，调用者最大等待时间为500毫秒
   testOnBorrow: false   #这是从连接池获取连接时，是否进行有效性检查设置为false
   testOnReturn: true  #这是向连接池返回连接时，是否进行有效性检查设置为true。
+
+
+
+now:
+  host:
+    ip: 8.130.99.124
+    port: 23135
+
+mailSendingService:
+  sendRedirect: http://${mailSendingService.frontend.ip}:${mailSendingService.frontend.port}/service?token=%s
+  userVerifyUrl: http://%s:%s/utilityBill/signUp/userSignUp/verify?signUpUUID=%s
+  backend:
+    ip: 8.130.99.124
+    port: 23135
+  frontend:
+    ip: 47.98.174.168
+    port: 23134
