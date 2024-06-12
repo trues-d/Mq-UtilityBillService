@@ -44,6 +44,9 @@
 ##### 4. Scheduled task, send an HTTP request to the campus logistics service of Rongda University to determine whether the user's dormitory electricity fee is below the threshold ✔ Implemented
 ##### 5. Idempotent verification, implement idempotent verification through Redis scheduled key ❌ Not Implemented  
 
+## project url：
+### http://47.98.174.168:23134/
+
 
 # 作者：ZZGEDA 张赞
 
@@ -92,3 +95,6 @@
 #####  4、定时任务，向容大后勤服务接口发送http请求，判断用户宿舍电费是否低于阈值 ✔  已实现    
 #####  5、幂等校验，通过redis定时key缓存用户注册数据 同时使用list数据结构（栈）实现用户登录幂等校验 √ 已实现  
 #####  6、用户注册的下拉列表接口完善，共计四个接口 √ 已实现 
+
+## 项目访问地址：
+### http://47.98.174.168:23134/
