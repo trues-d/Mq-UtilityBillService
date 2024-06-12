@@ -46,6 +46,13 @@
 
 ## project url：
 ### http://47.98.174.168:23134/
+## project images 
+*    - project backend code repository：https://github.com/ZZGADA/Mq-UtilityBillService
+*    - project frontend code repository：https://github.com/ZZGADA/UtilityBillService-FrontEnd
+*    - project backend image ：registry.cn-wulanchabu.aliyuncs.com/zzgeda/mail_sending_service:backend_1.0.5
+*    - start script ：java -jar app.jar （无需手动输入，容器启动后自动启动SpringBoot服务）
+*    - project frontend image ：registry.cn-wulanchabu.aliyuncs.com/zzgeda/mail_sending_service:frontend_1.0.4
+*    - start script ：npm run start
 
 
 # 作者：ZZGEDA 张赞
@@ -98,3 +105,10 @@
 
 ## 项目访问地址：
 ### http://47.98.174.168:23134/
+## 项目镜像
+*    - 项目后端地址：https://github.com/ZZGADA/Mq-UtilityBillService
+*    - 项目前端地址：https://github.com/ZZGADA/UtilityBillService-FrontEnd
+*    - 项目后端镜像地址：registry.cn-wulanchabu.aliyuncs.com/zzgeda/mail_sending_service:backend_1.0.5
+*    - 启动命令：java -jar app.jar （无需手动输入，容器启动后自动启动SpringBoot服务）
+*    - 项目前端镜像地址：registry.cn-wulanchabu.aliyuncs.com/zzgeda/mail_sending_service:frontend_1.0.4
+*    - 启动命令：npm run start 
