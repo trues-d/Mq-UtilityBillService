@@ -42,5 +42,5 @@ mailSendingService:
     ip: 8.130.99.124
     port: 23135
   frontend:
-    ip: 47.98.174.168
+    ip: 8.130.14.29
     port: 23134
