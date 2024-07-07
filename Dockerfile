@@ -14,7 +14,9 @@ RUN apt-get install -y openjdk-8-jdk
 COPY target/*.jar /utilityBillService/app.jar
 
 ENV JAVA_OPTS="" JAVA_HEAP_OPTS=""
-#CMD exec java -jar app.jar
+ENV LANG C.UTF-8
+ENV TZ Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # 指定容器启动时执行的命令
 CMD ["java", "-jar", "app.jar"]

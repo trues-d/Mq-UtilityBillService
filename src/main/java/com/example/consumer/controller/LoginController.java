@@ -39,15 +39,7 @@ public class LoginController {
 
     @GetMapping("/testTtt")
     public WebResponseUtil<Void> test(){
-        try{
-            System.out.println("test1");
-            throw new BizException("really strange",2000);
-        }catch (Exception exception){
-            log.error(exception.getMessage(),exception);
-        }
-
         System.out.println("hello");
-
         return WebResponseUtil.Success();
     }
 
