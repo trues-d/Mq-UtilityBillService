@@ -29,15 +29,7 @@ jedis:
   testOnReturn: true  #这是向连接池返回连接时，是否进行有效性检查设置为true。
 
 
-
-now:
-  host:
-    ip: 8.130.99.124
-    port: 23135
-
 mailSendingService:
-  sendRedirect: http://${mailSendingService.frontend.ip}:${mailSendingService.frontend.port}/service?token=%s
-  userVerifyUrl: http://%s:%s/utilityBill/signUp/userSignUp/verify?signUpUUID=%s
   backend:
     ip: 8.130.99.124
     port: 23135

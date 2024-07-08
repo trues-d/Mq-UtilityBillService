@@ -108,6 +108,8 @@ feign:
     enabled: true # 开启Feign的熔断功能
 
 mailSendingService:
+  sendRedirect: http://${mailSendingService.frontend.ip}:${mailSendingService.frontend.port}/service?token=%s  # 填自己的前端ip和端口
+  userVerifyUrl: http://%s:%s/utilityBill/signUp/userSignUp/verify?signUpUUID=%s
   sudoEmail: 1293177585@qq.com
   rongDaClientHost: https://application.xiaofubao.com
   rongDaDormitoryDetail: /app/electric/queryISIMSRoomBuyRecord
@@ -119,3 +121,8 @@ mailSendingService:
   auth:
     excludePaths: # 无需登录校验的路径
       - /userSignUp/**
+
+now:
+  host:
+    ip: ${mailSendingService.backend.ip} # 填自己的后端ip
+    port: ${mailSendingService.backend.port} # 填自己的后端port
