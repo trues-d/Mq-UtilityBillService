@@ -82,7 +82,7 @@
 
 *   - 项目后端地址：https://github.com/ZZGADA/Mq-UtilityBillService
 *   - 项目前端地址：https://github.com/ZZGADA/UtilityBillService-FrontEnd
-*   - 项目后端镜像：registry.cn-wulanchabu.aliyuncs.com/zzgeda/mail_sending_service:be_1.1.1
+*   - 项目后端镜像：registry.cn-wulanchabu.aliyuncs.com/zzgeda/mail_sending_service:be_1.1.3
 *        - 使用 docker pull 命令拉取镜像
 *        - 使用 docker run -p 23135:18081 -d 镜像id 启动容器
 *        - 启动命令：java -jar app.jar （无需手动输入，容器启动后自动启动SpringBoot服务）
