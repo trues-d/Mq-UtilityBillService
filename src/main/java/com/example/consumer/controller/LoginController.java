@@ -5,6 +5,8 @@ import com.example.consumer.exception.BizException;
 import com.example.consumer.pojo.dto.UserLoginDTO;
 import com.example.consumer.pojo.vo.LoginTokenVO;
 import com.example.consumer.service.IUserService;
+import com.example.consumer.service.IUtilityBillsService;
+import com.example.consumer.service.impl.UtilityBillsService;
 import com.example.consumer.utils.WebResponseUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +21,9 @@ import javax.annotation.Resource;
 public class LoginController {
     @Resource
     private IUserService userService;
+
+    @Resource
+    private IUtilityBillsService utilityBillsService;
 
 
     /**
@@ -40,6 +45,7 @@ public class LoginController {
     @GetMapping("/testTtt")
     public WebResponseUtil<Void> test(){
         System.out.println("hello");
+        utilityBillsService.queryAllUserSendMessage();
         return WebResponseUtil.Success();
     }
 

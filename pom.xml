@@ -62,21 +62,6 @@
             <version>1.5.1-RELEASE</version>
         </dependency>
 
-        <!--spring cloud alibaba dependencies-->
-        <!--        <dependency>-->
-        <!--            <groupId>com.alibaba.cloud</groupId>-->
-        <!--            <artifactId>spring-cloud-alibaba-dependencies</artifactId>-->
-        <!--            <version>${spring-cloud-alibaba.version}</version>-->
-        <!--            <type>pom</type>-->
-        <!--            <scope>import</scope>-->
-        <!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.cloud</groupId>-->
-<!--            <artifactId>spring-cloud-dependencies</artifactId>-->
-<!--            <version>${spring-cloud.version}</version>-->
-<!--            <type>pom</type>-->
-<!--            <scope>import</scope>-->
-<!--        </dependency>-->
 
         <!--openFeign-->
         <!-- https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-openfeign -->
@@ -157,13 +142,6 @@
             <artifactId>spring-security-crypto</artifactId>
         </dependency>
 
-        <!--       security rsa -->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.security</groupId>-->
-<!--            <artifactId>spring-security-rsa</artifactId>-->
-<!--            <version>1.0.9.RELEASE</version>-->
-<!--        </dependency>-->
-
         <!--jwt依赖 用于生成token-->
         <dependency>
             <groupId>com.auth0</groupId>
@@ -177,12 +155,6 @@
             <version>${hutool.version}</version>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.cloud</groupId>-->
-<!--            <artifactId>spring-cloud-openfeign-core</artifactId>-->
-<!--            <version>3.1.8</version>-->
-<!--        </dependency>-->
-
 
     </dependencies>
 
@@ -192,7 +164,76 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-resources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>target/classes</outputDirectory>
+<!--                            <useDefaultDelimiters>false</useDefaultDelimiters>-->
+                            <delimiters>
+                                <!-- 定义 @占位符-->
+                                <delimiter>@</delimiter>
+                            </delimiters>
+
+                            <!--占位符中的value编码方式-->
+                            <encoding>UTF-8</encoding>
+                            <resources>
+                                <!-- 引入资源 -->
+                                <resource>
+                                    <directory>src/main/java</directory>
+                                    <includes>
+                                        <include>**/*.xml</include>
+                                    </includes>
+                                    <filtering>true</filtering>
+                                </resource>
+
+                                <resource>
+                                    <directory>src/main/resources/</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>**/*.yaml</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+                <!--不同环境Profile的唯一id-->
+                <id>dev</id>
+                <activation>
+                    <activeByDefault>true</activeByDefault>
+                </activation>
+                <properties>
+                    <!--environment是自定义的字段（名字随便起），自定义字段可以有多个，确保与配置文件一致-->
+                    <environment>dev</environment>
+                </properties>
+        </profile>
+
+        <profile>
+            <id>pro</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <environment>pro</environment>
+            </properties>
+        </profile>
+    </profiles>
+
+
 
 </project>

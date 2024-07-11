@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: default, dev
+    active: @environment@
 
   # 数据源
   datasource:
